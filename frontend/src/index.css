@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles */
+.table-responsive-hidden {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .sm\:table-cell {
+    display: table-cell !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:table-cell {
+    display: table-cell !important;
+  }
+}
+
+[data-sidebar-hidden] aside {
+  display: none;
+}
+
+[data-focus-mode] aside,
+[data-focus-mode] header {
+  display: none !important;
+}

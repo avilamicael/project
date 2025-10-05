@@ -1,0 +1,64 @@
+services:
+  # Backend Django
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+    volumes:
+      - ./backend/djangoapp:/djangoapp
+      - ./backend/data/web/static:/data/web/static/
+      - ./backend/data/web/media:/data/web/media/
+    expose:
+      - "8000"
+    env_file:
+      - ./backend/dotenv_files/.env
+    depends_on:
+      - psql
+    networks:
+      - app-network
+
+  # Frontend React
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    expose:
+      - "3000"
+    environment:
+      - REACT_APP_API_URL=/api
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+  # Banco de Dados PostgreSQL
+  psql:
+    container_name: psql
+    image: postgres:13-alpine
+    volumes:
+      - ./backend/data/postgres/data:/var/lib/postgresql/data/
+    env_file:
+      - ./backend/dotenv_files/.env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
