@@ -1,14 +1,14 @@
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
-import { 
-  AlignHorizontalJustifyEnd, 
-  Home, 
-  LogOut, 
-  Package, 
-  PanelBottom, 
-  Settings2, 
-  Users, 
+import {
+  AlignHorizontalJustifyEnd,
+  Home,
+  LogOut,
+  Package,
+  PanelBottom,
+  Settings2,
+  Users,
   Wallet,
   FileText,
   DollarSign,
@@ -23,8 +23,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Sidebar() {
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <>
       {/* ===== DESKTOP: Sidebar Vertical com Ícones ===== */}
@@ -71,10 +78,10 @@ export function Sidebar() {
                   Financeiro
                 </TooltipContent>
               </Tooltip>
-              
-              <DropdownMenuContent 
-                side="right" 
-                align="start" 
+
+              <DropdownMenuContent
+                side="right"
+                align="start"
                 sideOffset={12}
                 className="w-48"
               >
@@ -146,13 +153,13 @@ export function Sidebar() {
             {/* Sair */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  to="/sair"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+                <button
+                  onClick={handleLogout}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-destructive/10"
                 >
-                  <LogOut className="h-5 w-5 text-red-500" />
+                  <LogOut className="h-5 w-5 text-destructive" />
                   <span className="sr-only">Sair</span>
-                </Link>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={12}>
                 Sair
