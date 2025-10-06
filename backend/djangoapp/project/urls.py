@@ -25,6 +25,7 @@ from rest_framework.response import Response
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
+    path('api/financeiro/', include('financeiro.urls')),
 ]
 
 if settings.DEBUG:
