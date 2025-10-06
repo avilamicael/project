@@ -1,8 +1,28 @@
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
-import { Home, LogOut, Package, PanelBottom, Settings2, Users, Wallet } from "lucide-react";
+import { 
+  AlignHorizontalJustifyEnd, 
+  Home, 
+  LogOut, 
+  Package, 
+  PanelBottom, 
+  Settings2, 
+  Users, 
+  Wallet,
+  FileText,
+  DollarSign,
+  TrendingUp
+} from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 export function Sidebar() {
   return (
@@ -16,7 +36,7 @@ export function Sidebar() {
               to="/"
               className="flex h-9 w-9 shrink-0 items-center justify-center bg-primary text-primary-foreground rounded-full"
             >
-              <Package className="h-4 w-4" />
+              <AlignHorizontalJustifyEnd className="h-4 w-4" />
               <span className="sr-only">SyncWave</span>
             </Link>
 
@@ -31,22 +51,61 @@ export function Sidebar() {
                   <span className="sr-only">Início</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Início</TooltipContent>
+              <TooltipContent side="right" sideOffset={12}>
+                Início
+              </TooltipContent>
             </Tooltip>
 
-            {/* Financeiro */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/financeiro"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Wallet className="h-5 w-5" />
-                  <span className="sr-only">Financeiro</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">Financeiro</TooltipContent>
-            </Tooltip>
+            {/* Financeiro com Submenu */}
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground">
+                      <Wallet className="h-5 w-5" />
+                      <span className="sr-only">Financeiro</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={12}>
+                  Financeiro
+                </TooltipContent>
+              </Tooltip>
+              
+              <DropdownMenuContent 
+                side="right" 
+                align="start" 
+                sideOffset={12}
+                className="w-48"
+              >
+                <DropdownMenuLabel>Financeiro</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/financeiro/dashboard" className="flex items-center gap-2 cursor-pointer">
+                    <TrendingUp className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/financeiro/receitas" className="flex items-center gap-2 cursor-pointer">
+                    <DollarSign className="h-4 w-4" />
+                    Receitas
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/financeiro/despesas" className="flex items-center gap-2 cursor-pointer">
+                    <DollarSign className="h-4 w-4" />
+                    Despesas
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/financeiro/relatorios" className="flex items-center gap-2 cursor-pointer">
+                    <FileText className="h-4 w-4" />
+                    Relatórios
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Clientes */}
             <Tooltip>
@@ -59,7 +118,9 @@ export function Sidebar() {
                   <span className="sr-only">Clientes</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Clientes</TooltipContent>
+              <TooltipContent side="right" sideOffset={12}>
+                Clientes
+              </TooltipContent>
             </Tooltip>
 
             {/* Configurações */}
@@ -73,7 +134,9 @@ export function Sidebar() {
                   <span className="sr-only">Configurações</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Configurações</TooltipContent>
+              <TooltipContent side="right" sideOffset={12}>
+                Configurações
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </nav>
@@ -91,7 +154,9 @@ export function Sidebar() {
                   <span className="sr-only">Sair</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Sair</TooltipContent>
+              <TooltipContent side="right" sideOffset={12}>
+                Sair
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </nav>
@@ -128,14 +193,39 @@ export function Sidebar() {
                   Início
                 </Link>
 
-                {/* Financeiro */}
-                <Link
-                  to="/financeiro"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Wallet className="h-5 w-5 transition-all" />
-                  Financeiro
-                </Link>
+                {/* Financeiro com submenu */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 px-2.5 text-muted-foreground font-medium">
+                    <Wallet className="h-5 w-5" />
+                    Financeiro
+                  </div>
+                  <div className="ml-9 space-y-2 border-l-2 border-border pl-4">
+                    <Link
+                      to="/financeiro/dashboard"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/financeiro/receitas"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Receitas
+                    </Link>
+                    <Link
+                      to="/financeiro/despesas"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Despesas
+                    </Link>
+                    <Link
+                      to="/financeiro/relatorios"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Relatórios
+                    </Link>
+                  </div>
+                </div>
 
                 {/* Clientes */}
                 <Link
