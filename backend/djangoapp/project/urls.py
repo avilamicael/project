@@ -17,22 +17,14 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 
-@api_view(['GET'])
-def api_test(request):
-    return Response({
-        'message': 'Backend Django conectado com sucesso!',
-        'status': 'online'
-    })
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api_test, name='api_test'),
+    path('api/auth/', include('authentication.urls')),
 ]
 
 if settings.DEBUG:
