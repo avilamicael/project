@@ -37,6 +37,21 @@ class Filial(BaseCompanyModel):
     def __str__(self):
         return self.nome
     
+    def save(self, *args, **kwargs):
+        """Converte campos de texto para UPPERCASE"""
+        if self.nome:
+            self.nome = self.nome.upper()
+        if self.endereco:
+            self.endereco = self.endereco.upper()
+        if self.cidade:
+            self.cidade = self.cidade.upper()
+        if self.estado:
+            self.estado = self.estado.upper()
+        if self.email:
+            self.email = self.email.upper()
+        
+        super().save(*args, **kwargs)
+    
     def clean(self):
         """Validação customizada"""
         if self.cnpj:
@@ -77,6 +92,13 @@ class CategoriaFinanceira(BaseCompanyModel):
     
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.nome}"
+    
+    def save(self, *args, **kwargs):
+        """Converte nome para UPPERCASE"""
+        if self.nome:
+            self.nome = self.nome.upper()
+        
+        super().save(*args, **kwargs)
 
 
 class Fornecedor(BaseCompanyModel):
@@ -125,6 +147,25 @@ class Fornecedor(BaseCompanyModel):
     def __str__(self):
         return self.nome_fantasia or self.nome
     
+    def save(self, *args, **kwargs):
+        """Converte campos de texto para UPPERCASE"""
+        if self.nome:
+            self.nome = self.nome.upper()
+        if self.nome_fantasia:
+            self.nome_fantasia = self.nome_fantasia.upper()
+        if self.email:
+            self.email = self.email.upper()
+        if self.endereco:
+            self.endereco = self.endereco.upper()
+        if self.cidade:
+            self.cidade = self.cidade.upper()
+        if self.estado:
+            self.estado = self.estado.upper()
+        if self.observacoes:
+            self.observacoes = self.observacoes.upper()
+        
+        super().save(*args, **kwargs)
+    
     def clean(self):
         """Validação customizada"""
         if self.cpf_cnpj:
@@ -150,6 +191,13 @@ class FormaPagamento(BaseCompanyModel):
     
     def __str__(self):
         return self.nome
+    
+    def save(self, *args, **kwargs):
+        """Converte nome para UPPERCASE"""
+        if self.nome:
+            self.nome = self.nome.upper()
+        
+        super().save(*args, **kwargs)
 
 
 class ContasPagar(BaseCompanyModel):
@@ -332,12 +380,15 @@ class ContasPagar(BaseCompanyModel):
         return f"{filial_info} {self.descricao}"
     
     def save(self, *args, **kwargs):
-        """Converte descrição para UPPERCASE e atualiza status"""
+        """Converte campos de texto para UPPERCASE e atualiza status"""
         if self.descricao:
             self.descricao = self.descricao.upper()
         
         if self.notas_fiscais:
             self.notas_fiscais = self.notas_fiscais.upper()
+        
+        if self.observacoes:
+            self.observacoes = self.observacoes.upper()
         
         # Atualiza status automaticamente
         if self.valor_pago > 0:

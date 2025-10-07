@@ -4,6 +4,9 @@ from core.middleware import get_current_company
 
 
 class FilialSerializer(serializers.ModelSerializer):
+    # Retorna o nome do company ao inves do uuid
+    company = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = Filial
         fields = [
@@ -16,10 +19,15 @@ class FilialSerializer(serializers.ModelSerializer):
         company = get_current_company()
         if company:
             validated_data['company'] = company
+            
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        validated_data['updated_by'] = user
+
         return super().create(validated_data)
 
-
 class CategoriaFinanceiraSerializer(serializers.ModelSerializer):
+    company = serializers.StringRelatedField(read_only=True)
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     
     class Meta:
@@ -38,6 +46,7 @@ class CategoriaFinanceiraSerializer(serializers.ModelSerializer):
 
 
 class FornecedorSerializer(serializers.ModelSerializer):
+    company = serializers.StringRelatedField(read_only=True)
     tipo_pessoa_display = serializers.CharField(source='get_tipo_pessoa_display', read_only=True)
     
     class Meta:
@@ -58,6 +67,7 @@ class FornecedorSerializer(serializers.ModelSerializer):
 
 
 class FormaPagamentoSerializer(serializers.ModelSerializer):
+    company = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = FormaPagamento
         fields = [
@@ -73,6 +83,7 @@ class FormaPagamentoSerializer(serializers.ModelSerializer):
 
 
 class ContasPagarSerializer(serializers.ModelSerializer):
+    company = serializers.StringRelatedField(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     frequencia_recorrencia_display = serializers.CharField(
         source='get_frequencia_recorrencia_display', 
