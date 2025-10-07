@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { fornecedoresService } from "@/services/contas-pagar.service";
 
 const fornecedorSchema = z.object({
   nome: z.string().min(1, "Nome/Razão Social é obrigatório"),
@@ -77,16 +78,28 @@ export function FornecedorDialog({
     setIsLoading(true);
 
     try {
-      // Aqui você fará a chamada para sua API
-      // await api.post('/fornecedores', data);
-      
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await fornecedoresService.criar({
+        nome: data.nome,
+        nome_fantasia: data.nome_fantasia || "",
+        tipo_pessoa: data.tipo_pessoa as "fisica" | "juridica",
+        cpf_cnpj: data.cpf_cnpj || "",
+        inscricao_estadual: "",
+        email: data.email || "",
+        telefone: data.telefone || "",
+        endereco: "",
+        cidade: data.cidade || "",
+        estado: data.estado || "",
+        cep: "",
+        ativo: true,
+        observacoes: ""
+      });
       
       onSuccess(data);
       form.reset();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Erro ao criar fornecedor:", error);
+    } catch (error: any) {
+      console.error("❌ Erro ao criar fornecedor:", error);
+      alert(error.response?.data?.message || error.message || "Erro ao salvar fornecedor");
     } finally {
       setIsLoading(false);
     }

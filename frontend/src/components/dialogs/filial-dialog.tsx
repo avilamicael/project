@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { filiaisService } from "@/services/contas-pagar.service";
 
 const filialSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -62,17 +63,23 @@ export function FilialDialog({
     setIsLoading(true);
 
     try {
-      // Aqui você fará a chamada para sua API
-      // await api.post('/filiais', data);
-      
-      // Simula delay de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await filiaisService.criar({
+        nome: data.nome,
+        cnpj: data.cnpj || "",
+        endereco: "",
+        cidade: data.cidade || "",
+        estado: data.estado || "",
+        telefone: data.telefone || "",
+        email: "",
+        ativa: true
+      });
       
       onSuccess(data);
       form.reset();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Erro ao criar filial:", error);
+    } catch (error: any) {
+      console.error("❌ Erro ao criar filial:", error);
+      alert(error.response?.data?.message || error.message || "Erro ao salvar filial");
     } finally {
       setIsLoading(false);
     }

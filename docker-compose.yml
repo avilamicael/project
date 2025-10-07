@@ -28,8 +28,11 @@ services:
     expose:
       - "3000"
     environment:
-      - REACT_APP_API_URL=/api
-      - WATCHPACK_POLLING=true
+    - REACT_APP_API_URL=/api
+    - WATCHPACK_POLLING=true
+    - WDS_SOCKET_HOST=localhost
+    - WDS_SOCKET_PORT=80
+    - WDS_SOCKET_PATH=/ws
     depends_on:
       - backend
     networks:

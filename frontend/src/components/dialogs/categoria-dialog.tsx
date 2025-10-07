@@ -3,6 +3,7 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { categoriasService } from "@/services/contas-pagar.service";
 import * as z from "zod";
 import {
   Dialog,
@@ -67,16 +68,19 @@ export function CategoriaDialog({
     setIsLoading(true);
 
     try {
-      // Aqui você fará a chamada para sua API
-      // await api.post('/categorias', data);
-      
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await categoriasService.criar({
+        nome: data.nome,
+        tipo: data.tipo as "receita" | "despesa",
+        cor: data.cor || "#6B7280",
+        ativa: true
+      });
       
       onSuccess(data);
       form.reset();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Erro ao criar categoria:", error);
+    } catch (error: any) {
+      console.error("❌ Erro ao criar categoria:", error);
+      alert(error.response?.data?.message || error.message || "Erro ao salvar categoria");
     } finally {
       setIsLoading(false);
     }
@@ -160,11 +164,10 @@ export function CategoriaDialog({
                         <button
                           key={cor.value}
                           type="button"
-                          className={`w-10 h-10 rounded-md border-2 transition-all ${
-                            field.value === cor.value
+                          className={`w-10 h-10 rounded-md border-2 transition-all ${field.value === cor.value
                               ? "border-primary scale-110"
                               : "border-transparent hover:scale-105"
-                          }`}
+                            }`}
                           style={{ backgroundColor: cor.value }}
                           onClick={() => field.onChange(cor.value)}
                           disabled={isLoading}

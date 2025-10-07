@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator, RegexValidator
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date
+from django.utils import timezone
 from core.models import BaseCompanyModel
 
 
@@ -287,8 +288,11 @@ class ContasPagar(BaseCompanyModel):
         validators=[MinValueValidator(Decimal('0'))]
     )
     
-    # Datas
-    data_emissao = models.DateField('Data de Emissão')
+    # Datas - data_emissao agora tem default
+    data_emissao = models.DateField(
+        'Data de Emissão',
+        default=timezone.now  # Preenche automaticamente com a data atual
+    )
     data_vencimento = models.DateField('Data de Vencimento')
     data_pagamento = models.DateField('Data de Pagamento', null=True, blank=True)
     

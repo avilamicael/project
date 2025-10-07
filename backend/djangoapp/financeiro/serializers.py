@@ -17,13 +17,14 @@ class FilialSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         company = get_current_company()
+        user = self.context['request'].user
+        
         if company:
             validated_data['company'] = company
+        if user:  
+            validated_data['created_by'] = user  
+            validated_data['updated_by'] = user  
             
-        user = self.context['request'].user
-        validated_data['created_by'] = user
-        validated_data['updated_by'] = user
-
         return super().create(validated_data)
 
 class CategoriaFinanceiraSerializer(serializers.ModelSerializer):
@@ -40,8 +41,14 @@ class CategoriaFinanceiraSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         company = get_current_company()
+        user = self.context['request'].user
+        
         if company:
             validated_data['company'] = company
+        if user:  
+            validated_data['created_by'] = user  
+            validated_data['updated_by'] = user  
+
         return super().create(validated_data)
 
 
@@ -61,8 +68,14 @@ class FornecedorSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         company = get_current_company()
+        user = self.context['request'].user
+        
         if company:
             validated_data['company'] = company
+        if user:  
+            validated_data['created_by'] = user  
+            validated_data['updated_by'] = user  
+
         return super().create(validated_data)
 
 
@@ -77,9 +90,15 @@ class FormaPagamentoSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         company = get_current_company()
+        user = self.context['request'].user
+        
         if company:
             validated_data['company'] = company
-        return super().create(validated_data)
+        if user:  
+            validated_data['created_by'] = user  
+            validated_data['updated_by'] = user 
+
+        return super().create(validated_data) 
 
 
 class ContasPagarSerializer(serializers.ModelSerializer):
@@ -122,7 +141,7 @@ class ContasPagarSerializer(serializers.ModelSerializer):
             'categoria', 'categoria_detalhes',
             'valor_original', 'desconto', 'juros', 'multa', 'valor_pago',
             'valor_final', 'valor_restante', 'percentual_pago',
-            'data_emissao', 'data_vencimento', 'data_pagamento',
+            'data_vencimento', 'data_pagamento',
             'forma_pagamento', 'forma_pagamento_detalhes',
             'status', 'status_display', 'esta_vencida',
             'e_parcelada', 'parcela_atual', 'total_parcelas', 'grupo_parcelamento',
@@ -132,7 +151,7 @@ class ContasPagarSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id', 'company', 'created_at', 'updated_at', 
-            'created_by', 'updated_by'
+            'created_by', 'updated_by', 'data_emissao'
         ]
     
     def create(self, validated_data):

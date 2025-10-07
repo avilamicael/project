@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { formasPagamentoService } from "@/services/contas-pagar.service";
 
 const formaPagamentoSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -54,16 +55,17 @@ export function FormaPagamentoDialog({
     setIsLoading(true);
 
     try {
-      // Aqui você fará a chamada para sua API
-      // await api.post('/formas-pagamento', data);
-      
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await formasPagamentoService.criar({
+        nome: data.nome,
+        ativa: true
+      });
       
       onSuccess(data);
       form.reset();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Erro ao criar forma de pagamento:", error);
+    } catch (error: any) {
+      console.error("❌ Erro ao criar forma de pagamento:", error);
+      alert(error.response?.data?.message || error.message || "Erro ao salvar forma de pagamento");
     } finally {
       setIsLoading(false);
     }
