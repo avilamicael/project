@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { filiaisService } from "@/services/contas-pagar.service";
+import { toast } from "sonner";
 
 const filialSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -73,13 +74,16 @@ export function FilialDialog({
         email: "",
         ativa: true
       });
-      
+
+      toast.success("Filial criada com sucesso!");
       onSuccess(data);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
       console.error("❌ Erro ao criar filial:", error);
-      alert(error.response?.data?.message || error.message || "Erro ao salvar filial");
+      toast.error("Erro ao criar filial", {
+        description: error.response?.data?.message || error.message || "Erro ao salvar filial"
+      });
     } finally {
       setIsLoading(false);
     }

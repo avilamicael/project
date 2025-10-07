@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { categoriasService } from "@/services/contas-pagar.service";
 import * as z from "zod";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -74,13 +75,16 @@ export function CategoriaDialog({
         cor: data.cor || "#6B7280",
         ativa: true
       });
-      
+
+      toast.success("Categoria criada com sucesso!");
+
       onSuccess(data);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("❌ Erro ao criar categoria:", error);
-      alert(error.response?.data?.message || error.message || "Erro ao salvar categoria");
+      toast.error("Erro ao criar categoria", {
+        description: error.response?.data?.message || error.message
+      });
     } finally {
       setIsLoading(false);
     }
@@ -165,8 +169,8 @@ export function CategoriaDialog({
                           key={cor.value}
                           type="button"
                           className={`w-10 h-10 rounded-md border-2 transition-all ${field.value === cor.value
-                              ? "border-primary scale-110"
-                              : "border-transparent hover:scale-105"
+                            ? "border-primary scale-110"
+                            : "border-transparent hover:scale-105"
                             }`}
                           style={{ backgroundColor: cor.value }}
                           onClick={() => field.onChange(cor.value)}

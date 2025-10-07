@@ -104,6 +104,7 @@ class FormaPagamentoSerializer(serializers.ModelSerializer):
 class ContasPagarSerializer(serializers.ModelSerializer):
     company = serializers.StringRelatedField(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    quantidade_recorrencias = serializers.IntegerField(write_only=True, required=False, default=1)
     frequencia_recorrencia_display = serializers.CharField(
         source='get_frequencia_recorrencia_display', 
         read_only=True
@@ -145,7 +146,7 @@ class ContasPagarSerializer(serializers.ModelSerializer):
             'forma_pagamento', 'forma_pagamento_detalhes',
             'status', 'status_display', 'esta_vencida',
             'e_parcelada', 'parcela_atual', 'total_parcelas', 'grupo_parcelamento',
-            'e_recorrente', 'frequencia_recorrencia', 'frequencia_recorrencia_display',
+            'e_recorrente', 'frequencia_recorrencia', 'quantidade_recorrencias', 'frequencia_recorrencia_display',
             'notas_fiscais', 'numero_boleto', 'observacoes', 'anexo',
             'company', 'created_at', 'updated_at', 'created_by', 'updated_by'
         ]

@@ -39,6 +39,7 @@ import { FilialDialog } from "@/components/dialogs/filial-dialog";
 import { FornecedorDialog } from "@/components/dialogs/fornecedor-dialog";
 import { CategoriaDialog } from "@/components/dialogs/categoria-dialog";
 import { FormaPagamentoDialog } from "@/components/dialogs/forma-pagamento-dialog";
+import { toast } from "sonner";
 
 // Services
 import {
@@ -46,6 +47,7 @@ import {
   fornecedoresService,
   categoriasService,
   formasPagamentoService,
+  contasPagarService,
 } from "@/services/contas-pagar.service";
 
 // Schema de validação
@@ -57,6 +59,7 @@ const contasPagarSchema = z.object({
   descricao: z.string().min(1, "Descrição é obrigatória"),
   data_vencimento: z.date(),
   valor_original: z.number().min(0.01, "Valor deve ser maior que zero"),
+  quantidade_recorrencias: z.number().min(1).optional(),
 
   // Campos condicionais para parcelamento
   total_parcelas: z.number().min(1).optional(),
@@ -224,7 +227,18 @@ export default function ContasPagarForm() {
         payload.anexo = data.anexo;
       }
 
-      alert("Conta cadastrada com sucesso!");
+      if (data.tipo_pagamento === "recorrente") {
+        payload.e_recorrente = true;
+        payload.frequencia_recorrencia = data.frequencia_recorrencia;
+        payload.quantidade_recorrencias = data.quantidade_recorrencias;
+      }
+      
+      // ADICIONAR ESTA LINHA - Chama a API
+      await contasPagarService.criar(payload);
+
+      toast.success("Conta cadastrada com sucesso!", {
+        description: "A conta foi registrada no sistema."
+      });
       form.reset();
     } catch (error: any) {
       console.error("❌ Erro ao cadastrar conta:", error);
@@ -234,7 +248,9 @@ export default function ContasPagarForm() {
         || error.response?.data?.detail
         || error.message
         || "Erro ao cadastrar conta";
-      alert(errorMessage);
+      toast.error("Erro ao cadastrar conta", {
+        description: errorMessage
+      });
     } finally {
       setIsLoading(false);
     }
@@ -404,7 +420,6 @@ export default function ContasPagarForm() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unico">ÚNICO</SelectItem>
-                        <SelectItem value="parcelado">PARCELADO</SelectItem>
                         <SelectItem value="recorrente">RECORRENTE</SelectItem>
                       </SelectContent>
                     </Select>
@@ -477,33 +492,9 @@ export default function ContasPagarForm() {
             />
           </div>
 
-          {/* Seção 3: Campos Condicionais (Parcelamento ou Recorrência) */}
-          {tipoPagamento === "parcelado" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="total_parcelas"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>NÚMERO DE PARCELAS *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder="Ex: 12"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
-
           {tipoPagamento === "recorrente" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Frequência da recorrência */}
               <FormField
                 control={form.control}
                 name="frequencia_recorrencia"
@@ -533,8 +524,30 @@ export default function ContasPagarForm() {
                   </FormItem>
                 )}
               />
+
+              {/* Quantidade de recorrências */}
+              <FormField
+                control={form.control}
+                name="quantidade_recorrencias"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>QUANTIDADE DE RECORRÊNCIAS *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 6"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           )}
+
 
           {/* Seção 4: Detalhes Adicionais (3 colunas) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

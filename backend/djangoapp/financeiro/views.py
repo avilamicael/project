@@ -2,8 +2,11 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+import uuid
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Filial, CategoriaFinanceira, Fornecedor, FormaPagamento, ContasPagar
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from .serializers import (
     FilialSerializer,
     CategoriaFinanceiraSerializer,
@@ -136,3 +139,78 @@ class ContasPagarViewSet(BaseCompanyViewSet):
         
         serializer = self.get_serializer(conta)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Cria uma ou várias contas a pagar (recorrentes).
+        Se 'e_recorrente' for True e 'quantidade_recorrencias' > 1,
+        gera múltiplos lançamentos conforme a frequência informada.
+        """
+        data = request.data.copy()
+        quantidade = int(data.get('quantidade_recorrencias', 1))
+        e_recorrente = data.get('e_recorrente', False)
+        frequencia = data.get('frequencia_recorrencia')
+        contas_criadas = []
+
+        # Serializa e valida os dados de entrada
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        # Caso seja uma conta única (não recorrente)
+        if not e_recorrente or quantidade <= 1:
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        # Caso seja recorrente → cria várias contas com vencimentos diferentes
+        primeira_data = serializer.validated_data['data_vencimento']
+
+        for i in range(quantidade):
+            nova_data = self._adicionar_periodo(primeira_data, frequencia, i)
+            nova_conta_data = serializer.validated_data.copy()
+
+            # 🔹 Remove campos que não pertencem ao modelo
+            nova_conta_data.pop('quantidade_recorrencias', None)
+
+            # 🔹 Ajusta campos dinâmicos
+            nova_conta_data['data_vencimento'] = nova_data
+            nova_conta_data['descricao'] = f"{nova_conta_data['descricao']} ({i+1}/{quantidade})"
+            nova_conta_data['e_recorrente'] = True
+            nova_conta_data['grupo_parcelamento'] = uuid.uuid4()
+
+            # 🔹 Define empresa e usuário criador (compatível com BaseCompanyModel)
+            company = getattr(request.user, 'company', None)
+            if company:
+                nova_conta_data['company'] = company
+            nova_conta_data['created_by'] = request.user
+            nova_conta_data['updated_by'] = request.user
+
+            # Cria a nova conta
+            conta = ContasPagar.objects.create(**nova_conta_data)
+            contas_criadas.append(conta)
+
+        # Serializa o retorno com todas as contas criadas
+        output_serializer = self.get_serializer(contas_criadas, many=True)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+    def _adicionar_periodo(self, data_inicial, frequencia, n):
+        if not data_inicial or n == 0:
+            return data_inicial
+
+        if frequencia == 'semanal':
+            return data_inicial + timedelta(weeks=n)
+        elif frequencia == 'quinzenal':
+            return data_inicial + timedelta(days=15 * n)
+        elif frequencia == 'mensal':
+            return data_inicial + relativedelta(months=n)
+        elif frequencia == 'bimestral':
+            return data_inicial + relativedelta(months=2 * n)
+        elif frequencia == 'trimestral':
+            return data_inicial + relativedelta(months=3 * n)
+        elif frequencia == 'semestral':
+            return data_inicial + relativedelta(months=6 * n)
+        elif frequencia == 'anual':
+            return data_inicial + relativedelta(years=n)
+
+        # Caso a frequência não seja reconhecida, retorna a data original
+        return data_inicial

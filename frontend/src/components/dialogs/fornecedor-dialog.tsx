@@ -4,6 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -93,13 +94,15 @@ export function FornecedorDialog({
         ativo: true,
         observacoes: ""
       });
-      
+
+      toast.success("Fornecedor criado com sucesso!");
       onSuccess(data);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("❌ Erro ao criar fornecedor:", error);
-      alert(error.response?.data?.message || error.message || "Erro ao salvar fornecedor");
+      toast.error("Erro ao criar fornecedor", {
+        description: error.response?.data?.message || error.message
+      });
     } finally {
       setIsLoading(false);
     }

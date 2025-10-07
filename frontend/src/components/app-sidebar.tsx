@@ -48,30 +48,18 @@ const data = {
           title: "Contas a Pagar",
           url: "/contas-pagar",
         },
-        {
-          title: "Receitas",
-          url: "/financeiro/receitas",
-        },
-        {
-          title: "Despesas",
-          url: "/financeiro/despesas",
-        },
-        {
-          title: "Relatórios",
-          url: "/financeiro/relatorios",
-        },
       ],
     },
-    {
-      title: "Clientes",
-      url: "/clientes",
-      icon: Users,
-    },
-    {
-      title: "Configurações",
-      url: "/configuracoes",
-      icon: Settings2,
-    },
+    // {
+    //   title: "Clientes",
+    //   url: "/clientes",
+    //   icon: Users,
+    // },
+    // {
+    //   title: "Configurações",
+    //   url: "/configuracoes",
+    //   icon: Settings2,
+    // },
   ],
 }
 

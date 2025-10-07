@@ -4,6 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -59,13 +60,15 @@ export function FormaPagamentoDialog({
         nome: data.nome,
         ativa: true
       });
-      
+
+      toast.success("Forma de pagamento criada com sucesso!");
       onSuccess(data);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("❌ Erro ao criar forma de pagamento:", error);
-      alert(error.response?.data?.message || error.message || "Erro ao salvar forma de pagamento");
+      toast.error("Erro ao criar forma de pagamento", {
+        description: error.response?.data?.message || error.message
+      });
     } finally {
       setIsLoading(false);
     }
