@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { contasPagarService } from '@/services/contas-pagar.service';
+import { DialogPagamento } from '@/components/contas_pagar/DialogPagamento';
 import {
     Search,
     Filter,
@@ -63,11 +64,15 @@ export default function ContasPagarPage() {
     // Estados
     const [contas, setContas] = useState<ContaPagar[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedContas, setSelectedContas] = useState<number[]>([]);
+    const [selectedContas, setSelectedContas] = useState<(number | string)[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const searchRef = useRef<any>(null);
     const [selectedConta, setSelectedConta] = useState<ContaPagar | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    // Dialog de pagamento
+    const [payDialogOpen, setPayDialogOpen] = useState(false);
+    const [payDialogIds, setPayDialogIds] = useState<(number | string)[]>([]);
+    const [payLoading, setPayLoading] = useState(false);
 
     const tableRef = useRef<HTMLDivElement | null>(null);
 
@@ -134,13 +139,42 @@ export default function ContasPagarPage() {
     const fetchOptions = async () => {
         try {
             // Carregar opções para os filtros
-            const filiaisResp = await fetch('/api/filiais/');
-            const categoriasResp = await fetch('/api/categorias-financeiras/?tipo=despesa');
-            const fornecedoresResp = await fetch('/api/fornecedores/');
+            const filiaisResp = await fetch('/financeiro/filiais/');
+            const categoriasResp = await fetch('/financeiro/categorias/');
+            const fornecedoresResp = await fetch('/financeiro/fornecedores/');
 
-            const filiais = await filiaisResp.json() as any[];
-            const categorias = await categoriasResp.json() as any[];
-            const fornecedores = await fornecedoresResp.json() as any[];
+            console.log('Respostas fetch:', {
+                filiaisStatus: filiaisResp.status,
+                categoriasStatus: categoriasResp.status,
+                fornecedoresStatus: fornecedoresResp.status
+            });
+
+            if (!filiaisResp.ok || !categoriasResp.ok || !fornecedoresResp.ok) {
+                toast({
+                    title: 'Erro ao carregar opções',
+                    description: 'Falha ao buscar dados de filiais, categorias ou fornecedores. Verifique se a API está rodando e os endpoints existem.'
+                });
+                return;
+            }
+
+            let filiais = [];
+            let categorias = [];
+            let fornecedores = [];
+            try {
+                filiais = await filiaisResp.json();
+            } catch (e) {
+                console.error('Erro ao fazer .json() em filiais:', e);
+            }
+            try {
+                categorias = await categoriasResp.json();
+            } catch (e) {
+                console.error('Erro ao fazer .json() em categorias:', e);
+            }
+            try {
+                fornecedores = await fornecedoresResp.json();
+            } catch (e) {
+                console.error('Erro ao fazer .json() em fornecedores:', e);
+            }
 
             setOptions({
                 filiais: filiais.map((f: any) => ({ value: f.id, label: f.nome })),
@@ -148,6 +182,10 @@ export default function ContasPagarPage() {
                 fornecedores: fornecedores.map((f: any) => ({ value: f.id, label: f.nome }))
             });
         } catch (error) {
+            toast({
+                title: 'Erro ao carregar opções',
+                description: error instanceof Error ? error.message : String(error)
+            });
             console.error('Erro ao carregar opções:', error);
         }
     };
@@ -274,6 +312,11 @@ export default function ContasPagarPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleKeyDown]);
 
+    useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleKeyDown]);
+
     // Calcular estatísticas
     const estatisticas = useMemo(() => {
         const hoje = new Date();
@@ -291,7 +334,6 @@ export default function ContasPagarPage() {
         };
 
         contas.forEach(conta => {
-            const valorFinal = calcularValorFinal(conta);
             const valorRestante = calcularValorRestante(conta);
             const dataVenc = new Date(conta.data_vencimento);
             const dataPag = conta.data_pagamento ? new Date(conta.data_pagamento) : null;
@@ -324,10 +366,11 @@ export default function ContasPagarPage() {
 
     // Calcular total selecionado
     const totalSelecionado = useMemo(() => {
-        return selectedContas.reduce((total, id) => {
+        return selectedContas.reduce((total: number, id) => {
             const conta = contas.find(c => c.id === id);
             if (conta) {
-                return total + calcularValorFinal(conta);
+                const valorFinal = calcularValorFinal(conta);
+                return total + Number(valorFinal);
             }
             return total;
         }, 0);
@@ -343,7 +386,7 @@ export default function ContasPagarPage() {
         }
     };
 
-    const handleSelectConta = (id: number) => {
+    const handleSelectConta = (id: number | string) => {
         setSelectedContas(prev =>
             prev.includes(id)
                 ? prev.filter(cid => cid !== id)
@@ -364,29 +407,47 @@ export default function ContasPagarPage() {
         setSearchTerm('');
     };
 
-    const handleMarcarComoPaga = async (ids: number[]) => {
+    // Abre o dialog de pagamento (individual ou lote)
+    const openPayDialog = (ids: (number | string)[]) => {
+        setPayDialogIds(ids as any);
+        setPayDialogOpen(true);
+    };
+
+    // Confirma o pagamento (individual ou lote)
+    const handleConfirmarPagamento = async (pagamentos: any[]) => {
+        setPayLoading(true);
         try {
-            await fetch('/api/contas-pagar/marcar-paga/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids })
-            });
+            for (const pagamento of pagamentos) {
+                const conta = contas.find(c => c.id === pagamento.id);
+                if (!conta) continue;
 
-            toast({
-                title: "Sucesso",
-                description: `${ids.length} conta(s) marcada(s) como paga.`
-            });
+                const valorTotal = pagamento.valor + pagamento.multa + pagamento.juros;
 
+                await contasPagarService.pagar(String(pagamento.id), {
+                    valor_pago: valorTotal,
+                    data_pagamento: pagamento.data
+                });
+
+                toast({
+                    title: `Conta "${conta.descricao}" marcada como paga`,
+                    description: `Valor: ${formatCurrency(valorTotal)} | Multa: ${formatCurrency(pagamento.multa)} | Juros: ${formatCurrency(pagamento.juros)}`
+                });
+            }
+
+            setPayDialogOpen(false);
             fetchContas();
             setSelectedContas([]);
         } catch (error) {
             const e = error as any;
-                toast({
-                    title: "Erro",
-                    description: e?.message || String(error)
-                });
+            toast({
+                title: "Erro",
+                description: e?.message || String(error)
+            });
+        } finally {
+            setPayLoading(false);
         }
     };
+
 
     const handleExportar = (onlySelected = true) => {
         const rows = onlySelected ? contas.filter(c => selectedContas.includes(c.id)) : contasFiltradas;
@@ -395,18 +456,18 @@ export default function ContasPagarPage() {
             return;
         }
 
-        const headers = ['id','descricao','fornecedor','filial','categoria','data_vencimento','valor_final','valor_pago','valor_restante','status'];
+        const headers = ['id', 'descricao', 'fornecedor', 'filial', 'categoria', 'data_vencimento', 'valor_final', 'valor_pago', 'valor_restante', 'status'];
         const csv = [headers.join(',')].concat(rows.map(r => {
             const valorFinal = calcularValorFinal(r);
             const valorRest = calcularValorRestante(r);
-            return [r.id, `"${(r.descricao||'').replace(/"/g,'""')}"`, `"${r.fornecedor_nome||''}"`, `"${r.filial_nome||''}"`, `"${r.categoria_nome||''}"`, r.data_vencimento, valorFinal, r.valor_pago || 0, valorRest, r.status].join(',');
+            return [r.id, `"${(r.descricao || '').replace(/"/g, '""')}"`, `"${r.fornecedor_nome || ''}"`, `"${r.filial_nome || ''}"`, `"${r.categoria_nome || ''}"`, r.data_vencimento, valorFinal, r.valor_pago || 0, valorRest, r.status].join(',');
         })).join('\n');
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `contas_export_${new Date().toISOString().slice(0,10)}.csv`;
+        a.download = `contas_export_${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
 
@@ -629,12 +690,8 @@ export default function ContasPagarPage() {
                                 </Button>
                                 <Button
                                     size="sm"
-                                    onClick={() => {
-                                        // eslint-disable-next-line no-restricted-globals
-                                        if (window.confirm(`Confirma marcar ${selectedContas.length} conta(s) como paga?`)) {
-                                            handleMarcarComoPaga(selectedContas);
-                                        }
-                                    }}
+                                    onClick={() => openPayDialog(selectedContas)}
+                                    disabled={selectedContas.length === 0}
                                 >
                                     <CheckCircle2 className="mr-2 h-4 w-4" />
                                     Marcar como Paga
@@ -777,7 +834,7 @@ export default function ContasPagarPage() {
                                                                 Editar
                                                             </DropdownMenuItem>
                                                             {conta.status !== 'paga' && (
-                                                                <DropdownMenuItem onClick={() => handleMarcarComoPaga([conta.id])}>
+                                                                <DropdownMenuItem onClick={() => openPayDialog([conta.id])}>
                                                                     <CheckCircle2 className="mr-2 h-4 w-4" />
                                                                     Marcar como Paga
                                                                 </DropdownMenuItem>
@@ -799,223 +856,262 @@ export default function ContasPagarPage() {
                 </CardContent>
             </Card>
             {/* Drawer de Detalhes */}
-  <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-    <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-      {selectedConta && (
-        <>
-          <SheetHeader>
-            <SheetTitle>Detalhes da Conta</SheetTitle>
-            <SheetDescription>
-              Informações completas e histórico da conta a pagar
-            </SheetDescription>
-          </SheetHeader>
+            <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+                <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+                    {selectedConta && (
+                        <>
+                            <SheetHeader>
+                                <SheetTitle>Detalhes da Conta</SheetTitle>
+                                <SheetDescription>
+                                    Informações completas e histórico da conta a pagar
+                                </SheetDescription>
+                            </SheetHeader>
 
-          <div className="mt-6 space-y-6">
-            {/* Informações Básicas */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Informações Básicas</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Descrição</Label>
-                  <p className="font-medium">{selectedConta.descricao}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <div className="mt-1">
-                    <Badge 
-                      variant="outline" 
-                      className={STATUS_CONFIG[selectedConta.status]?.color}
-                    >
-                      {STATUS_CONFIG[selectedConta.status]?.label}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Fornecedor</Label>
-                  <p className="font-medium">{selectedConta.fornecedor_nome || '-'}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Filial</Label>
-                  <p className="font-medium">{selectedConta.filial_nome || '-'}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Categoria</Label>
-                  <p className="font-medium">{selectedConta.categoria_nome || '-'}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Número do Documento</Label>
-                  <p className="font-medium">{selectedConta.numero_documento || '-'}</p>
-                </div>
-              </div>
-            </div>
+                            <div className="mt-6 space-y-6">
+                                {/* Informações Básicas */}
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-lg">Informações Básicas</h3>
 
-            {/* Valores */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Valores</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Valor Original</Label>
-                  <p className="font-medium text-lg">
-                    {formatCurrency(selectedConta.valor_original)}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Desconto</Label>
-                  <p className="font-medium text-green-600">
-                    {formatCurrency(selectedConta.desconto || 0)}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Juros</Label>
-                  <p className="font-medium text-orange-600">
-                    {formatCurrency(selectedConta.juros || 0)}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Multa</Label>
-                  <p className="font-medium text-red-600">
-                    {formatCurrency(selectedConta.multa || 0)}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Valor Final</Label>
-                  <p className="font-bold text-xl text-primary">
-                    {formatCurrency(calcularValorFinal(selectedConta))}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Valor Pago</Label>
-                  <p className="font-medium text-green-600 text-lg">
-                    {formatCurrency(selectedConta.valor_pago || 0)}
-                  </p>
-                </div>
-                
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">Valor Restante</Label>
-                  <p className="font-bold text-2xl text-red-600">
-                    {formatCurrency(calcularValorRestante(selectedConta))}
-                  </p>
-                </div>
-              </div>
-            </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="text-muted-foreground">Descrição</Label>
+                                            <p className="font-medium">{selectedConta.descricao}</p>
+                                        </div>
 
-            {/* Datas */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Datas</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Data de Emissão</Label>
-                  <p className="font-medium">{formatDate(selectedConta.data_emissao)}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-muted-foreground">Data de Vencimento</Label>
-                  <p className={cn(
-                    "font-medium",
-                    isVencida(selectedConta.data_vencimento, selectedConta.status) && "text-red-600"
-                  )}>
-                    {formatDate(selectedConta.data_vencimento)}
-                  </p>
-                </div>
-                
-                {selectedConta.data_pagamento && (
-                  <div>
-                    <Label className="text-muted-foreground">Data de Pagamento</Label>
-                    <p className="font-medium">{formatDate(selectedConta.data_pagamento)}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+                                        <div>
+                                            <Label className="text-muted-foreground">Status</Label>
+                                            <div className="mt-1">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={STATUS_CONFIG[selectedConta.status]?.color}
+                                                >
+                                                    {STATUS_CONFIG[selectedConta.status]?.label}
+                                                </Badge>
+                                            </div>
+                                        </div>
 
-            {/* Observações */}
-            {selectedConta.observacoes && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Observações</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {selectedConta.observacoes}
-                </p>
-              </div>
-            )}
+                                        <div>
+                                            <Label className="text-muted-foreground">Fornecedor</Label>
+                                            <p className="font-medium">{selectedConta.fornecedor_nome || '-'}</p>
+                                        </div>
 
-            {/* Forma de Pagamento */}
-            {selectedConta.forma_pagamento_nome && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Forma de Pagamento</h3>
-                <Badge variant="outline">{selectedConta.forma_pagamento_nome}</Badge>
-              </div>
-            )}
+                                        <div>
+                                            <Label className="text-muted-foreground">Filial</Label>
+                                            <p className="font-medium">{selectedConta.filial_nome || '-'}</p>
+                                        </div>
 
-            {/* Registrar Pagamento */}
-            {selectedConta.status !== 'paga' && selectedConta.status !== 'cancelada' && (
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-semibold text-lg">Registrar Pagamento</h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="valor-pagamento">Valor do Pagamento</Label>
-                    <Input
-                      id="valor-pagamento"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      defaultValue={calcularValorRestante(selectedConta)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="data-pagamento">Data do Pagamento</Label>
-                    <Input
-                      id="data-pagamento"
-                      type="date"
-                      defaultValue={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="observacoes-pagamento">Observações</Label>
-                    <Textarea
-                      id="observacoes-pagamento"
-                      placeholder="Adicione observações sobre o pagamento..."
-                    />
-                  </div>
-                  
-                  <Button className="w-full">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Confirmar Pagamento
-                  </Button>
-                </div>
-              </div>
-            )}
+                                        <div>
+                                            <Label className="text-muted-foreground">Categoria</Label>
+                                            <p className="font-medium">{selectedConta.categoria_nome || '-'}</p>
+                                        </div>
 
-            {/* Ações */}
-            <div className="flex gap-2 pt-4 border-t">
-              <Button variant="outline" className="flex-1">
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
-              <Button variant="outline" className="flex-1">
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-            </div>
-          </div>
-        </>
-      )}
-    </SheetContent>
-  </Sheet>
-</div>
+                                        <div>
+                                            <Label className="text-muted-foreground">Número do Documento</Label>
+                                            <p className="font-medium">{selectedConta.numero_documento || '-'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Valores */}
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-lg">Valores</h3>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="text-muted-foreground">Valor Original</Label>
+                                            <p className="font-medium text-lg">
+                                                {formatCurrency(selectedConta.valor_original)}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Desconto</Label>
+                                            <p className="font-medium text-green-600">
+                                                {formatCurrency(selectedConta.desconto || 0)}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Juros</Label>
+                                            <p className="font-medium text-orange-600">
+                                                {formatCurrency(selectedConta.juros || 0)}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Multa</Label>
+                                            <p className="font-medium text-red-600">
+                                                {formatCurrency(selectedConta.multa || 0)}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Valor Final</Label>
+                                            <p className="font-bold text-xl text-primary">
+                                                {formatCurrency(calcularValorFinal(selectedConta))}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Valor Pago</Label>
+                                            <p className="font-medium text-green-600 text-lg">
+                                                {formatCurrency(selectedConta.valor_pago || 0)}
+                                            </p>
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <Label className="text-muted-foreground">Valor Restante</Label>
+                                            <p className="font-bold text-2xl text-red-600">
+                                                {formatCurrency(calcularValorRestante(selectedConta))}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Datas */}
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-lg">Datas</h3>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="text-muted-foreground">Data de Emissão</Label>
+                                            <p className="font-medium">{formatDate(selectedConta.data_emissao)}</p>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-muted-foreground">Data de Vencimento</Label>
+                                            <p className={cn(
+                                                "font-medium",
+                                                isVencida(selectedConta.data_vencimento, selectedConta.status) && "text-red-600"
+                                            )}>
+                                                {formatDate(selectedConta.data_vencimento)}
+                                            </p>
+                                        </div>
+
+                                        {selectedConta.data_pagamento && (
+                                            <div>
+                                                <Label className="text-muted-foreground">Data de Pagamento</Label>
+                                                <p className="font-medium">{formatDate(selectedConta.data_pagamento)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Observações */}
+                                {selectedConta.observacoes && (
+                                    <div className="space-y-2">
+                                        <h3 className="font-semibold text-lg">Observações</h3>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                            {selectedConta.observacoes}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Forma de Pagamento */}
+                                {selectedConta.forma_pagamento_nome && (
+                                    <div className="space-y-2">
+                                        <h3 className="font-semibold text-lg">Forma de Pagamento</h3>
+                                        <Badge variant="outline">{selectedConta.forma_pagamento_nome}</Badge>
+                                    </div>
+                                )}
+
+                                {/* Registrar Pagamento */}
+                                {selectedConta.status !== 'paga' && selectedConta.status !== 'cancelada' && (
+                                    <div className="space-y-4 pt-4 border-t">
+                                        <h3 className="font-semibold text-lg">Registrar Pagamento</h3>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label htmlFor="valor-pagamento">Valor do Pagamento</Label>
+                                                <Input
+                                                    id="valor-pagamento"
+                                                    type="number"
+                                                    step="0.01"
+                                                    placeholder="0,00"
+                                                    defaultValue={calcularValorRestante(selectedConta)}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="data-pagamento">Data do Pagamento</Label>
+                                                <Input
+                                                    id="data-pagamento"
+                                                    type="date"
+                                                    defaultValue={new Date().toISOString().split('T')[0]}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="observacoes-pagamento">Observações</Label>
+                                                <Textarea
+                                                    id="observacoes-pagamento"
+                                                    placeholder="Adicione observações sobre o pagamento..."
+                                                />
+                                            </div>
+
+                                            <Button
+                                                className="w-full"
+                                                onClick={async () => {
+                                                    if (!selectedConta) return;
+                                                    const valorInput = (document.getElementById('valor-pagamento') as HTMLInputElement)?.value;
+                                                    const multaInput = window.prompt('Informe o valor da multa (se houver):', String(selectedConta.multa ?? "0"));
+                                                    const jurosInput = window.prompt('Informe o valor dos juros (se houver):', String(selectedConta.juros ?? "0"));
+                                                    const dataInput = (document.getElementById('data-pagamento') as HTMLInputElement)?.value;
+                                                    const valor_pago = valorInput ? Number(valorInput) : calcularValorRestante(selectedConta);
+                                                    const multa = multaInput ? Number(multaInput) : 0;
+                                                    const juros = jurosInput ? Number(jurosInput) : 0;
+                                                    const data_pagamento = dataInput || new Date().toISOString().split('T')[0];
+                                                    try {
+                                                        await contasPagarService.pagar(String(selectedConta.id), {
+                                                            valor_pago: valor_pago + multa + juros,
+                                                            data_pagamento
+                                                        });
+                                                        toast({
+                                                            title: `Conta "${selectedConta.descricao}" marcada como paga. Valor pago: R$ ${valor_pago + multa + juros} (Multa: R$ ${multa}, Juros: R$ ${juros})`,
+                                                            description: `Pagamento registrado em ${data_pagamento}.`
+                                                        });
+                                                        setDrawerOpen(false);
+                                                        fetchContas();
+                                                    } catch (error) {
+                                                        const e = error as any;
+                                                        toast({
+                                                            title: "Erro ao registrar pagamento",
+                                                            description: e?.message || String(error)
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                Confirmar Pagamento
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Ações */}
+                                <div className="flex gap-2 pt-4 border-t">
+                                    <Button variant="outline" className="flex-1">
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </Button>
+                                    <Button variant="outline" className="flex-1">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Exportar
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </SheetContent>
+            </Sheet>
+            <DialogPagamento
+                open={payDialogOpen}
+                onOpenChange={setPayDialogOpen}
+                contas={contas}
+                ids={payDialogIds}
+                loading={payLoading}
+                onConfirmar={handleConfirmarPagamento}
+            />
+        </div>
     );
 }
