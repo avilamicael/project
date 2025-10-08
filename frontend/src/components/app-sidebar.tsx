@@ -2,8 +2,6 @@ import * as React from "react"
 import {
   Home,
   Wallet,
-  Users,
-  Settings2,
   AlignHorizontalJustifyEnd,
 } from "lucide-react"
 
@@ -47,6 +45,10 @@ const data = {
         {
           title: "Contas a Pagar",
           url: "/contas-pagar",
+        },
+        {
+          title: "Listar Contas a Pagar",
+          url: "/contas-pagar/listar",
         },
       ],
     },

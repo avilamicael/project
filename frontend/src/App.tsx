@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
-import ContasPagarPage from '@/pages/contas_paga/ContasPaga';
+import ContasPagarPage from '@/pages/contas_pagar/ContasPagar';
 
 // Componente para o Header com Breadcrumb dinâmico
 function AppHeader() {
@@ -117,6 +117,7 @@ function App() {
 
                           {/* Rota para Contas a Pagar */}
                           <Route path="/contas-pagar" element={<ContasPagarPage />} />
+                          <Route path="/contas-pagar/listar" element={React.createElement(require('@/pages/contas_pagar/ListContasPagar').default)} />
 
                           {/* Adicione mais rotas protegidas aqui */}
                         </Routes>
