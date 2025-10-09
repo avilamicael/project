@@ -65,17 +65,17 @@ services:
       - ./nginx/certbot/www:/var/www/certbot
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: >
-      sh -c "
-        certbot certonly --webroot
-        --webroot-path /var/www/certbot
-        --email seu-email@dominio.com
-        --agree-tos
-        --no-eff-email
-        -d seu-dominio.com
-        && cp -r /etc/letsencrypt/* /etc/letsencrypt
-      "
+      sh -c "certbot certonly --webroot
+            --webroot-path /var/www/certbot
+            --email seu-email@dominio.com
+            --agree-tos
+            --no-eff-email
+            -d seu-dominio.com
+            --non-interactive
+            --quiet"
     networks:
       - app-network
+
 
 
   # Banco de Dados PostgreSQL
