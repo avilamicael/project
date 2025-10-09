@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.db import models
 import uuid
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet, DateFilter, CharFilter
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet, DateFilter, CharFilter, BaseInFilter, NumberFilter
 from .models import Filial, CategoriaFinanceira, Fornecedor, FormaPagamento, ContasPagar
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
@@ -27,12 +27,28 @@ class CustomPageNumberPagination(PageNumberPagination):
     max_page_size = 10000  # Limite máximo
 
 
+class NumberInFilter(BaseInFilter, NumberFilter):
+    """Filtro que aceita múltiplos valores numéricos separados por vírgula"""
+    pass
+
+
+class CharInFilter(BaseInFilter, CharFilter):
+    """Filtro que aceita múltiplos valores de texto separados por vírgula"""
+    pass
+
+
 class ContasPagarFilter(FilterSet):
     """Filtros customizados para Contas a Pagar"""
     data_vencimento_inicio = DateFilter(field_name='data_vencimento', lookup_expr='gte')
     data_vencimento_fim = DateFilter(field_name='data_vencimento', lookup_expr='lte')
     data_pagamento_inicio = DateFilter(field_name='data_pagamento', lookup_expr='gte')
     data_pagamento_fim = DateFilter(field_name='data_pagamento', lookup_expr='lte')
+
+    # Filtros que aceitam múltiplos valores usando __in lookup
+    status = CharInFilter(field_name='status', lookup_expr='in')
+    filial = NumberInFilter(field_name='filial', lookup_expr='in')
+    categoria = NumberInFilter(field_name='categoria', lookup_expr='in')
+    fornecedor = NumberInFilter(field_name='fornecedor', lookup_expr='in')
 
     class Meta:
         model = ContasPagar

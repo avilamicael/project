@@ -15,7 +15,7 @@ import { formatCurrency, calcularValorFinal, calcularValorRestante, isVencida, c
 import { STATUS_CONFIG } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
-type SortKey = 'descricao' | 'fornecedor_nome' | 'filial_nome' | 'categoria_nome' | 'data_vencimento' | 'valor_original' | 'valor_final' | 'valor_pago' | 'valor_restante' | 'status';
+type SortKey = 'descricao' | 'fornecedor_nome' | 'filial_nome' | 'categoria_nome' | 'data_vencimento' | 'valor_original' | 'valor_pago' | 'status';
 type SortOrder = 'asc' | 'desc' | null;
 
 interface ContasPagarTableProps {
@@ -69,17 +69,6 @@ export function ContasPagarTable({
         return [...contas].sort((a, b) => {
             let aValue: any;
             let bValue: any;
-
-            if (sortKey === 'valor_final') {
-                aValue = calcularValorFinal(a);
-                bValue = calcularValorFinal(b);
-            } else if (sortKey === 'valor_restante') {
-                aValue = calcularValorRestante(a);
-                bValue = calcularValorRestante(b);
-            } else {
-                aValue = a[sortKey as keyof ContaPagar];
-                bValue = b[sortKey as keyof ContaPagar];
-            }
 
             // Handle null/undefined values
             if (aValue === null || aValue === undefined) return 1;
@@ -177,19 +166,8 @@ export function ContasPagarTable({
                                 className="-ml-3 h-8 data-[state=open]:bg-accent"
                                 onClick={() => handleSort('valor_original')}
                             >
-                                Valor Original
+                                Valor Bruto
                                 {getSortIcon('valor_original')}
-                            </Button>
-                        </TableHead>
-                        <TableHead className="text-right">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="-ml-3 h-8 data-[state=open]:bg-accent"
-                                onClick={() => handleSort('valor_final')}
-                            >
-                                Valor Final
-                                {getSortIcon('valor_final')}
                             </Button>
                         </TableHead>
                         <TableHead className="text-right">
@@ -201,17 +179,6 @@ export function ContasPagarTable({
                             >
                                 Valor Pago
                                 {getSortIcon('valor_pago')}
-                            </Button>
-                        </TableHead>
-                        <TableHead className="text-right">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="-ml-3 h-8 data-[state=open]:bg-accent"
-                                onClick={() => handleSort('valor_restante')}
-                            >
-                                Valor Restante
-                                {getSortIcon('valor_restante')}
                             </Button>
                         </TableHead>
                         <TableHead>
@@ -230,20 +197,18 @@ export function ContasPagarTable({
                 <TableBody>
                     {loading ? (
                         <TableRow>
-                            <TableCell colSpan={11} className="text-center py-8">
+                            <TableCell colSpan={9} className="text-center py-8">
                                 Carregando...
                             </TableCell>
                         </TableRow>
                     ) : sortedContas.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                 Nenhuma conta encontrada
                             </TableCell>
                         </TableRow>
                     ) : (
                         sortedContas.map((conta) => {
-                            const valorFinal = calcularValorFinal(conta);
-                            const valorRestante = calcularValorRestante(conta);
                             const vencida = isVencida(conta.data_vencimento, conta.status);
 
                             return (
@@ -280,11 +245,9 @@ export function ContasPagarTable({
                                     <TableCell className="text-right">
                                         {formatCurrency(Number(conta.valor_original))}
                                     </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(valorFinal)}</TableCell>
                                     <TableCell className="text-right">
                                         {formatCurrency(Number(conta.valor_pago || 0))}
                                     </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(valorRestante)}</TableCell>
                                     <TableCell>
                                         {(() => {
                                             const statusInfo = STATUS_CONFIG[conta.status as keyof typeof STATUS_CONFIG];

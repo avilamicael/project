@@ -158,12 +158,15 @@ class ContasPagarSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         company = get_current_company()
         user = self.context['request'].user
-        
+
+        # Remove campos que não pertencem ao model (usados apenas para lógica de criação)
+        validated_data.pop('quantidade_recorrencias', None)
+
         if company:
             validated_data['company'] = company
         if user:
             validated_data['created_by'] = user
-        
+
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
