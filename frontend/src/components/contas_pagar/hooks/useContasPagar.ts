@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { contasPagarService, filiaisService, categoriasService, fornecedoresService } from '@/services/contas-pagar.service';
 import { useToast } from '@/hooks/use-toast';
-import type { ContaPagar, Options } from '@/types/contasPagar';
+import type { ContaPagar, Options, Filters } from '@/types/contasPagar';
 
-export function useContasPagar() {
+export function useContasPagar(filters?: Filters, searchTerm?: string) {
   const { toast } = useToast();
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,17 +16,41 @@ export function useContasPagar() {
   const fetchContas = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await contasPagarService.listar({ page });
+
+      // Preparar parâmetros com filtros
+      const params: any = { page };
+
+      // Adicionar filtros se existirem
+      if (filters) {
+        if (filters.status?.length) params.status = filters.status.map(String);
+        if (filters.filial?.length) params.filial = filters.filial.map(String);
+        if (filters.categoria?.length) params.categoria = filters.categoria.map(String);
+        if (filters.fornecedor?.length) params.fornecedor = filters.fornecedor.map(String);
+
+        if (filters.dataVencimento?.from) {
+          params.data_vencimento_inicio = new Date(filters.dataVencimento.from as any).toISOString().split('T')[0];
+          if (filters.dataVencimento.to) {
+            params.data_vencimento_fim = new Date(filters.dataVencimento.to as any).toISOString().split('T')[0];
+          }
+        }
+
+        if (filters.dataPagamento?.from) {
+          params.data_pagamento_inicio = new Date(filters.dataPagamento.from as any).toISOString().split('T')[0];
+          if (filters.dataPagamento.to) {
+            params.data_pagamento_fim = new Date(filters.dataPagamento.to as any).toISOString().split('T')[0];
+          }
+        }
+      }
+
+      // Adicionar busca se existir
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+
+      const response = await contasPagarService.listar(params);
       const contasData = response.results || response;
 
-      const contasPadronizadas = contasData.map((conta: any) => ({
-        ...conta,
-        fornecedor_id: conta.fornecedor_id ?? conta.fornecedor,
-        filial_id: conta.filial_id ?? conta.filial,
-        categoria_id: conta.categoria_id ?? conta.categoria,
-      }));
-
-      setContas(contasPadronizadas);
+      setContas(contasData);
 
       // Atualiza total de páginas e total de registros (25 por página, por exemplo)
       if (response.count) {
@@ -43,7 +67,7 @@ export function useContasPagar() {
     } finally {
       setLoading(false);
     }
-  }, [page, toast]);
+  }, [page, filters, searchTerm, toast]);
 
 
 

@@ -110,11 +110,6 @@ export function ContasPagarDetails({
                                 <Label className="text-muted-foreground">Categoria</Label>
                                 <p className="font-medium">{conta.categoria_nome || '-'}</p>
                             </div>
-
-                            <div>
-                                <Label className="text-muted-foreground">Número do Documento</Label>
-                                <p className="font-medium">{conta.numero_documento || '-'}</p>
-                            </div>
                         </div>
                     </div>
 

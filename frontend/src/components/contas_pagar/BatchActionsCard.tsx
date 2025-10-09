@@ -6,7 +6,7 @@ import { Download, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface BatchActionsCardProps {
-    selectedContas: number[];
+    selectedContas: string[];
     contas: ContaPagar[];
     contasFiltradas: ContaPagar[];
     totalSelecionado: number;
@@ -15,7 +15,7 @@ interface BatchActionsCardProps {
     onSelectVisible: () => void;
     onSelectAll: () => void;
     onExport: (onlySelected: boolean) => void;
-    onPay: (ids: number[]) => void;
+    onPay: (ids: string[]) => void;
 }
 
 export function BatchActionsCard({

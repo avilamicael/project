@@ -31,19 +31,25 @@ import { PagamentoData } from '@/components/contas_pagar/DialogPagamento';
 
 export default function ContasPagarPage() {
     const { toast } = useToast();
-    const { contas, loading, options, refetchContas, page, totalPages, totalCount, setPage } = useContasPagar();
-    const { filters, setFilters, searchTerm, setSearchTerm, contasFiltradas, clearFilters } = useFiltros(contas);
+    const { filters, setFilters, searchTerm, setSearchTerm, clearFilters } = useFiltros([]);
+    const { contas, loading, options, refetchContas, page, totalPages, totalCount, setPage } = useContasPagar(filters, searchTerm);
+    const contasFiltradas = contas; // Agora os filtros são aplicados no backend
     const [statsRefreshTrigger, setStatsRefreshTrigger] = React.useState(0);
     const estatisticas = useContasPagarStats(statsRefreshTrigger);
 
-    const [selectedContas, setSelectedContas] = useState<number[]>([]);
+    // Resetar página para 1 quando os filtros mudarem
+    React.useEffect(() => {
+        setPage(1);
+    }, [filters, searchTerm, setPage]);
+
+    const [selectedContas, setSelectedContas] = useState<string[]>([]);
     const [selectAllMode, setSelectAllMode] = useState(false); // true = todas as contas, false = apenas página atual
     const [selectAllLoading, setSelectAllLoading] = useState(false);
     const [allContasData, setAllContasData] = useState<ContaPagar[]>([]); // Cache de todas as contas quando "selecionar todas"
     const [selectedConta, setSelectedConta] = useState<ContaPagar | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [payDialogOpen, setPayDialogOpen] = useState(false);
-    const [payDialogIds, setPayDialogIds] = useState<number[]>([]);
+    const [payDialogIds, setPayDialogIds] = useState<string[]>([]);
     const [payLoading, setPayLoading] = useState(false);
 
     // Calcular total selecionado
@@ -99,7 +105,7 @@ export default function ContasPagarPage() {
         setSelectAllLoading(true);
         try {
             const todasContas = await fetchAllContas();
-            const ids = todasContas.map((c: any) => c.id as number);
+            const ids = todasContas.map((c: any) => c.id as string);
 
             setAllContasData(todasContas as ContaPagar[]);
             setSelectedContas(ids);
@@ -114,7 +120,7 @@ export default function ContasPagarPage() {
         }
     };
 
-    const handleSelectConta = (id: number) => {
+    const handleSelectConta = (id: string) => {
         setSelectedContas(prev => {
             const newSelected = prev.includes(id)
                 ? prev.filter(cid => cid !== id)
@@ -134,7 +140,7 @@ export default function ContasPagarPage() {
         setDrawerOpen(true);
     };
 
-    const openPayDialog = (ids: number[]) => {
+    const openPayDialog = (ids: string[]) => {
         setPayDialogIds(ids);
         setPayDialogOpen(true);
     };

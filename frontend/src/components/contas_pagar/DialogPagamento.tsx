@@ -13,13 +13,13 @@ interface DialogPagamentoProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     contas: ContaPagar[];
-    ids: (number | string)[]; // Aceitar tanto number quanto string (UUIDs)
+    ids: string[];
     loading: boolean;
     onConfirmar: (pagamentos: PagamentoData[]) => void;
 }
 
 export interface PagamentoData {
-    id: number | string; // Aceitar tanto number quanto string (UUIDs)
+    id: string;
     valor: number;
     multa: number;
     juros: number;

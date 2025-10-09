@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.db import models
 import uuid
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet, DateFilter, CharFilter
 from .models import Filial, CategoriaFinanceira, Fornecedor, FormaPagamento, ContasPagar
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
@@ -25,6 +25,18 @@ class CustomPageNumberPagination(PageNumberPagination):
     page_size = 25
     page_size_query_param = 'page_size'  # Permite ?page_size=100
     max_page_size = 10000  # Limite máximo
+
+
+class ContasPagarFilter(FilterSet):
+    """Filtros customizados para Contas a Pagar"""
+    data_vencimento_inicio = DateFilter(field_name='data_vencimento', lookup_expr='gte')
+    data_vencimento_fim = DateFilter(field_name='data_vencimento', lookup_expr='lte')
+    data_pagamento_inicio = DateFilter(field_name='data_pagamento', lookup_expr='gte')
+    data_pagamento_fim = DateFilter(field_name='data_pagamento', lookup_expr='lte')
+
+    class Meta:
+        model = ContasPagar
+        fields = ['status', 'filial', 'fornecedor', 'categoria', 'e_parcelada', 'e_recorrente']
 
 
 class BaseCompanyViewSet(viewsets.ModelViewSet):
@@ -89,11 +101,8 @@ class ContasPagarViewSet(BaseCompanyViewSet):
     serializer_class = ContasPagarSerializer
     pagination_class = CustomPageNumberPagination  # Usar paginação customizada
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = [
-        'status', 'filial', 'fornecedor', 'categoria',
-        'e_parcelada', 'e_recorrente'
-    ]
-    search_fields = ['descricao', 'notas_fiscais', 'numero_boleto']
+    filterset_class = ContasPagarFilter  # Usar FilterSet customizado
+    search_fields = ['descricao', 'notas_fiscais', 'numero_boleto', 'fornecedor__nome']
     ordering_fields = [
         'data_vencimento', 'data_emissao', 'data_pagamento',
         'valor_original', 'created_at'

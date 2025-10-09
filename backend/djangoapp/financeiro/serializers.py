@@ -176,21 +176,28 @@ class ContasPagarSerializer(serializers.ModelSerializer):
 
 class ContasPagarListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listagem (performance)"""
-    
+
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     valor_final = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     valor_restante = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     esta_vencida = serializers.BooleanField(read_only=True)
-    
+
+    filial_id = serializers.CharField(source='filial.id', read_only=True)
     filial_nome = serializers.CharField(source='filial.nome', read_only=True)
+    fornecedor_id = serializers.CharField(source='fornecedor.id', read_only=True)
     fornecedor_nome = serializers.CharField(source='fornecedor.nome', read_only=True)
+    categoria_id = serializers.CharField(source='categoria.id', read_only=True)
     categoria_nome = serializers.CharField(source='categoria.nome', read_only=True)
-    
+
     class Meta:
         model = ContasPagar
         fields = [
-            'id', 'descricao', 'filial_nome', 'fornecedor_nome', 'categoria_nome',
+            'id', 'descricao',
+            'filial_id', 'filial_nome',
+            'fornecedor_id', 'fornecedor_nome',
+            'categoria_id', 'categoria_nome',
             'valor_original', 'valor_final', 'valor_restante', 'valor_pago',
-            'data_vencimento', 'data_pagamento', 'status', 'status_display',
+            'data_vencimento', 'data_pagamento', 'data_emissao',
+            'status', 'status_display',
             'esta_vencida', 'e_parcelada', 'parcela_atual', 'total_parcelas'
         ]

@@ -104,15 +104,6 @@ export function FiltrosCard({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Data de Movimentação</Label>
-                        <DateRangePicker
-                            date={filters.dataMovimentacao}
-                            setDate={(value) => setFilters(prev => ({ ...prev, dataMovimentacao: value }))}
-                            placeholder="Período de movimentação"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
                         <Label>Buscar</Label>
                         <div className="relative">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

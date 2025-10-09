@@ -20,12 +20,12 @@ type SortOrder = 'asc' | 'desc' | null;
 
 interface ContasPagarTableProps {
     contas: ContaPagar[];
-    selectedContas: number[];
+    selectedContas: string[];
     loading: boolean;
     selectAllMode?: boolean;
     totalContas?: number;
     onSelectAll: () => void;
-    onSelectConta: (id: number) => void;
+    onSelectConta: (id: string) => void;
     onViewDetails: (conta: ContaPagar) => void;
 }
 
@@ -271,11 +271,6 @@ export function ContasPagarTable({
                                     >
                                         <div className="flex flex-col">
                                             <span>{conta.descricao}</span>
-                                            {conta.numero_documento && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    NF: {conta.numero_documento}
-                                                </span>
-                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>{conta.fornecedor_nome || '-'}</TableCell>

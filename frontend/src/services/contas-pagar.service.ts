@@ -4,9 +4,10 @@
  */
 
 import { api } from './api';
+import type { ContaPagar } from '@/types/contasPagar';
 
-// Tipos
-export interface ContaPagar {
+// Tipo para criação de conta (campos necessários para o formulário)
+export interface ContaPagarCreate {
   id?: string;
   filial: string;
   fornecedor: string;
@@ -16,8 +17,8 @@ export interface ContaPagar {
   desconto?: number;
   juros?: number;
   multa?: number;
-  data_emissao?: string;
-  data_vencimento: string;
+  data_emissao?: string | Date;
+  data_vencimento: string | Date;
   forma_pagamento?: string;
   status?: 'pendente' | 'paga' | 'vencida' | 'cancelada';
   numero_boleto?: string;
@@ -91,10 +92,33 @@ export const contasPagarService = {
   /**
    * Lista todas as contas a pagar
    */
-  listar: async (params: { page?: number; page_size?: number } = {}): Promise<PaginatedResponse<ContaPagar>> => {
+  listar: async (params: {
+    page?: number;
+    page_size?: number;
+    status?: string[];
+    filial?: string[];
+    categoria?: string[];
+    fornecedor?: string[];
+    data_vencimento_inicio?: string;
+    data_vencimento_fim?: string;
+    data_pagamento_inicio?: string;
+    data_pagamento_fim?: string;
+    search?: string;
+  } = {}): Promise<PaginatedResponse<ContaPagar>> => {
     const query = new URLSearchParams();
     if (params.page) query.append('page', params.page.toString());
     if (params.page_size) query.append('page_size', params.page_size.toString());
+
+    // Filtros
+    if (params.status?.length) params.status.forEach(s => query.append('status', s));
+    if (params.filial?.length) params.filial.forEach(f => query.append('filial', f));
+    if (params.categoria?.length) params.categoria.forEach(c => query.append('categoria', c));
+    if (params.fornecedor?.length) params.fornecedor.forEach(f => query.append('fornecedor', f));
+    if (params.data_vencimento_inicio) query.append('data_vencimento_inicio', params.data_vencimento_inicio);
+    if (params.data_vencimento_fim) query.append('data_vencimento_fim', params.data_vencimento_fim);
+    if (params.data_pagamento_inicio) query.append('data_pagamento_inicio', params.data_pagamento_inicio);
+    if (params.data_pagamento_fim) query.append('data_pagamento_fim', params.data_pagamento_fim);
+    if (params.search) query.append('search', params.search);
 
     const response = await api.get<PaginatedResponse<ContaPagar>>(
       `/financeiro/contas-pagar/?${query.toString()}`
@@ -122,7 +146,7 @@ export const contasPagarService = {
   /**
    * Cria uma nova conta a pagar
    */
-  criar: async (data: ContaPagar): Promise<ContaPagar> => {
+  criar: async (data: ContaPagarCreate): Promise<ContaPagar> => {
     // Se tiver anexo, envia como FormData
     if (data.anexo) {
       const formData = new FormData();
@@ -133,7 +157,7 @@ export const contasPagarService = {
       formData.append('categoria', data.categoria);
       formData.append('descricao', data.descricao);
       formData.append('valor_original', data.valor_original.toString());
-      formData.append('data_vencimento', data.data_vencimento);
+      formData.append('data_vencimento', typeof data.data_vencimento === 'string' ? data.data_vencimento : data.data_vencimento.toISOString());
 
       // Campos opcionais
       if (data.forma_pagamento) formData.append('forma_pagamento', data.forma_pagamento);
@@ -160,7 +184,7 @@ export const contasPagarService = {
   /**
    * Atualiza uma conta existente
    */
-  atualizar: async (id: string, data: Partial<ContaPagar>): Promise<ContaPagar> => {
+  atualizar: async (id: string, data: Partial<ContaPagarCreate>): Promise<ContaPagar> => {
     const response = await api.put<ContaPagar>(`/financeiro/contas-pagar/${id}/`, data);
     return response.data;
   },
