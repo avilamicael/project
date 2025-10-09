@@ -27,6 +27,8 @@ export interface ContaPagar {
   e_parcelada?: boolean;
   parcela_atual?: number;
   total_parcelas?: number;
+  e_recorrente?: boolean;
+  frequencia_recorrencia?: string;
   observacoes?: string;
 }
 

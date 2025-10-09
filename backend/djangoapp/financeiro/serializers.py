@@ -202,5 +202,6 @@ class ContasPagarListSerializer(serializers.ModelSerializer):
             'valor_original', 'valor_final', 'valor_restante', 'valor_pago',
             'data_vencimento', 'data_pagamento', 'data_emissao',
             'status', 'status_display',
-            'esta_vencida', 'e_parcelada', 'parcela_atual', 'total_parcelas'
+            'esta_vencida', 'e_parcelada', 'parcela_atual', 'total_parcelas',
+            'e_recorrente', 'frequencia_recorrencia'
         ]

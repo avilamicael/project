@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, calcularValorFinal, calcularValorRestante, isVencida, cn } from '@/lib/utils';
 import { STATUS_CONFIG } from "@/lib/utils";
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
 
 type SortKey = 'descricao' | 'fornecedor_nome' | 'filial_nome' | 'categoria_nome' | 'data_vencimento' | 'valor_original' | 'valor_pago' | 'status';
 type SortOrder = 'asc' | 'desc' | null;
@@ -234,8 +234,13 @@ export function ContasPagarTable({
                                         className="font-medium"
                                         onClick={() => onViewDetails(conta)}
                                     >
-                                        <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
                                             <span>{conta.descricao}</span>
+                                            {conta.e_recorrente && (
+                                                <span title="Conta recorrente">
+                                                    <Repeat className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                                </span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>{conta.fornecedor_nome || '-'}</TableCell>
