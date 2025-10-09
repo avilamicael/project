@@ -1,5 +1,12 @@
 FROM nginx:alpine
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copiar configs
+COPY conf.d /etc/nginx/conf.d/
 
-EXPOSE 80
+# Criar diretórios para Certbot
+RUN mkdir -p /var/www/certbot /etc/letsencrypt
+
+# Expor portas HTTP e HTTPS
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
