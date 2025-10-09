@@ -45,38 +45,14 @@ services:
       context: ./nginx
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./backend/data/web/static:/data/web/static/:ro
       - ./backend/data/web/media:/data/web/media/:ro
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
     depends_on:
       - backend
-    environment:
-      DOMAIN: "seu-dominio.com"
+      - frontend
     networks:
       - app-network
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
-    entrypoint: >
-      sh -c "certbot certonly --webroot
-            --webroot-path /var/www/certbot
-            --email seu-email@dominio.com
-            --agree-tos
-            --no-eff-email
-            -d seu-dominio.com
-            --non-interactive
-            --quiet"
-    networks:
-      - app-network
-
-
 
   # Banco de Dados PostgreSQL
   psql:

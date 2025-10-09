@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { contasPagarService } from '@/services/contas-pagar.service';
+import { contasPagarService, filiaisService, categoriasService, fornecedoresService } from '@/services/contas-pagar.service';
 import { useToast } from '@/hooks/use-toast';
 import type { ContaPagar, Options } from '@/types/contasPagar';
 
@@ -49,24 +49,10 @@ export function useContasPagar() {
 
   const fetchOptions = useCallback(async () => {
     try {
-      const [filiaisResp, categoriasResp, fornecedoresResp] = await Promise.all([
-        fetch('/financeiro/filiais/'),
-        fetch('/financeiro/categorias/'),
-        fetch('/financeiro/fornecedores/')
-      ]);
-
-      if (!filiaisResp.ok || !categoriasResp.ok || !fornecedoresResp.ok) {
-        toast({
-          title: 'Erro ao carregar opções',
-          description: 'Falha ao buscar dados de filiais, categorias ou fornecedores.'
-        });
-        return;
-      }
-
       const [filiais, categorias, fornecedores] = await Promise.all([
-        filiaisResp.json().catch(() => []),
-        categoriasResp.json().catch(() => []),
-        fornecedoresResp.json().catch(() => [])
+        filiaisService.listar(),
+        categoriasService.listar(),
+        fornecedoresService.listar()
       ]);
 
       setOptions({
