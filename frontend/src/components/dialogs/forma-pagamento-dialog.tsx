@@ -35,7 +35,7 @@ type FormaPagamentoFormData = z.infer<typeof formaPagamentoSchema>;
 interface FormaPagamentoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (data: FormaPagamentoFormData) => void;
+  onSuccess: (data: any) => void;
 }
 
 export function FormaPagamentoDialog({
@@ -56,13 +56,13 @@ export function FormaPagamentoDialog({
     setIsLoading(true);
 
     try {
-      await formasPagamentoService.criar({
+      const novaForma = await formasPagamentoService.criar({
         nome: data.nome,
         ativa: true
       });
 
       toast.success("Forma de pagamento criada com sucesso!");
-      onSuccess(data);
+      onSuccess(novaForma);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {

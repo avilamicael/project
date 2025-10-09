@@ -39,7 +39,7 @@ type FilialFormData = z.infer<typeof filialSchema>;
 interface FilialDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (data: FilialFormData) => void;
+  onSuccess: (data: any) => void;
 }
 
 export function FilialDialog({
@@ -64,7 +64,7 @@ export function FilialDialog({
     setIsLoading(true);
 
     try {
-      await filiaisService.criar({
+      const novaFilial = await filiaisService.criar({
         nome: data.nome,
         cnpj: data.cnpj || "",
         endereco: "",
@@ -76,7 +76,7 @@ export function FilialDialog({
       });
 
       toast.success("Filial criada com sucesso!");
-      onSuccess(data);
+      onSuccess(novaFilial);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {

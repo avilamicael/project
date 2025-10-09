@@ -80,6 +80,28 @@ interface PaginatedResponse<T> {
   results: T[];
 }
 
+/**
+ * Função helper para buscar TODOS os resultados de endpoints paginados
+ */
+async function fetchAllPages<T>(url: string): Promise<T[]> {
+  let allResults: T[] = [];
+  let nextUrl: string | null = url;
+  
+  while (nextUrl) {
+    const response: { data: PaginatedResponse<T> } = await api.get<PaginatedResponse<T>>(nextUrl);
+    allResults = [...allResults, ...response.data.results];
+    nextUrl = response.data.next;
+    
+    // Previne loop infinito
+    if (allResults.length > 50000) {
+      console.warn('⚠️ Limite de segurança atingido ao buscar páginas');
+      break;
+    }
+  }
+  
+  return allResults;
+}
+
 export interface ContasPagarEstatisticas {
   total_pendente: number;
   vencidas_count: number;
@@ -241,8 +263,7 @@ export const contasPagarService = {
 
 export const filiaisService = {
   listar: async (): Promise<Filial[]> => {
-    const response = await api.get<PaginatedResponse<Filial>>('/financeiro/filiais/');
-    return response.data.results;
+    return fetchAllPages<Filial>('/financeiro/filiais/');
   },
 
   criar: async (data: Omit<Filial, 'id'>): Promise<Filial> => {
@@ -253,8 +274,7 @@ export const filiaisService = {
 
 export const fornecedoresService = {
   listar: async (): Promise<Fornecedor[]> => {
-    const response = await api.get<PaginatedResponse<Fornecedor>>('/financeiro/fornecedores/');
-    return response.data.results;
+    return fetchAllPages<Fornecedor>('/financeiro/fornecedores/');
   },
 
   criar: async (data: Omit<Fornecedor, 'id'>): Promise<Fornecedor> => {
@@ -265,8 +285,7 @@ export const fornecedoresService = {
 
 export const categoriasService = {
   listar: async (): Promise<Categoria[]> => {
-    const response = await api.get<PaginatedResponse<Categoria>>('/financeiro/categorias/');
-    return response.data.results;
+    return fetchAllPages<Categoria>('/financeiro/categorias/');
   },
 
   criar: async (data: Omit<Categoria, 'id'>): Promise<Categoria> => {
@@ -277,8 +296,7 @@ export const categoriasService = {
 
 export const formasPagamentoService = {
   listar: async (): Promise<FormaPagamento[]> => {
-    const response = await api.get<PaginatedResponse<FormaPagamento>>('/financeiro/formas-pagamento/');
-    return response.data.results;
+    return fetchAllPages<FormaPagamento>('/financeiro/formas-pagamento/');
   },
 
   criar: async (data: Omit<FormaPagamento, 'id'>): Promise<FormaPagamento> => {

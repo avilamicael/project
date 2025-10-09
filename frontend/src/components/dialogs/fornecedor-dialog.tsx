@@ -49,7 +49,7 @@ type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 interface FornecedorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (data: FornecedorFormData) => void;
+  onSuccess: (data: any) => void; // Aceita o fornecedor completo retornado pela API
 }
 
 export function FornecedorDialog({
@@ -79,7 +79,8 @@ export function FornecedorDialog({
     setIsLoading(true);
 
     try {
-      await fornecedoresService.criar({
+      console.log("🔵 Criando fornecedor com dados:", data);
+      const novoFornecedor = await fornecedoresService.criar({
         nome: data.nome,
         nome_fantasia: data.nome_fantasia || "",
         tipo_pessoa: data.tipo_pessoa as "fisica" | "juridica",
@@ -95,8 +96,21 @@ export function FornecedorDialog({
         observacoes: ""
       });
 
+      console.log("✅ Fornecedor criado com sucesso:", novoFornecedor);
+      console.log("📋 Dados que serão enviados ao onSuccess:", {
+        id: novoFornecedor.id,
+        nome: novoFornecedor.nome,
+        nome_fantasia: novoFornecedor.nome_fantasia,
+        ativo: novoFornecedor.ativo
+      });
+
       toast.success("Fornecedor criado com sucesso!");
-      onSuccess(data);
+      
+      // Chama o callback ANTES de fechar
+      console.log("🎯 Chamando onSuccess...");
+      onSuccess(novoFornecedor);
+      
+      // Reseta e fecha depois
       form.reset();
       onOpenChange(false);
     } catch (error: any) {

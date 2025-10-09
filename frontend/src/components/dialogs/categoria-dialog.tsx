@@ -44,7 +44,7 @@ type CategoriaFormData = z.infer<typeof categoriaSchema>;
 interface CategoriaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (data: CategoriaFormData) => void;
+  onSuccess: (data: any) => void;
   tipoFixo?: "receita" | "despesa"; // Para filtrar apenas despesas no form de contas a pagar
 }
 
@@ -69,7 +69,7 @@ export function CategoriaDialog({
     setIsLoading(true);
 
     try {
-      await categoriasService.criar({
+      const novaCategoria = await categoriasService.criar({
         nome: data.nome,
         tipo: data.tipo as "receita" | "despesa",
         cor: data.cor || "#6B7280",
@@ -78,7 +78,7 @@ export function CategoriaDialog({
 
       toast.success("Categoria criada com sucesso!");
 
-      onSuccess(data);
+      onSuccess(novaCategoria);
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
