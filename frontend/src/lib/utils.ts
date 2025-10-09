@@ -8,27 +8,27 @@ export function cn(...inputs: ClassValue[]) {
 export const STATUS_CONFIG = {
   vencida: {
     label: "Vencida",
-    color: "bg-red-100 text-red-800 border-red-200",
+    color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200",
     icon: "🔴"
   },
   pendente: {
     label: "Pendente",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200",
     icon: "🟡"
   },
   paga: {
     label: "Paga",
-    color: "bg-green-100 text-green-800 border-green-200",
+    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200",
     icon: "🟢"
   },
   paga_parcial: {
     label: "Paga Parcial",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
+    color: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200",
     icon: "🔵"
   },
   cancelada: {
     label: "Cancelada",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
+    color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200",
     icon: "⚫"
   }
 } as const;

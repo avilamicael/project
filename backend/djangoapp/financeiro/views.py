@@ -1,7 +1,10 @@
+from decimal import Decimal
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from django.db import models
 import uuid
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Filial, CategoriaFinanceira, Fornecedor, FormaPagamento, ContasPagar
@@ -15,6 +18,13 @@ from .serializers import (
     ContasPagarSerializer,
     ContasPagarListSerializer
 )
+
+
+class CustomPageNumberPagination(PageNumberPagination):
+    """Paginação customizada que permite o cliente definir o page_size"""
+    page_size = 25
+    page_size_query_param = 'page_size'  # Permite ?page_size=100
+    max_page_size = 10000  # Limite máximo
 
 
 class BaseCompanyViewSet(viewsets.ModelViewSet):
@@ -75,10 +85,12 @@ class ContasPagarViewSet(BaseCompanyViewSet):
     queryset = ContasPagar.objects.select_related(
         'filial', 'fornecedor', 'categoria', 'forma_pagamento'
     ).all()
+
     serializer_class = ContasPagarSerializer
+    pagination_class = CustomPageNumberPagination  # Usar paginação customizada
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = [
-        'status', 'filial', 'fornecedor', 'categoria', 
+        'status', 'filial', 'fornecedor', 'categoria',
         'e_parcelada', 'e_recorrente'
     ]
     search_fields = ['descricao', 'notas_fiscais', 'numero_boleto']
@@ -86,13 +98,79 @@ class ContasPagarViewSet(BaseCompanyViewSet):
         'data_vencimento', 'data_emissao', 'data_pagamento',
         'valor_original', 'created_at'
     ]
-    ordering = ['-data_vencimento']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # 🔹 Ordenar primeiro por status, depois por data de vencimento
+        queryset = queryset.annotate(
+            status_order=models.Case(
+                models.When(status='vencida', then=models.Value(1)),
+                models.When(status='pendente', then=models.Value(2)),
+                default=models.Value(3),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('status_order', 'data_vencimento')
+
+        return queryset
     
     def get_serializer_class(self):
         """Usa serializer simplificado para listagem"""
         if self.action == 'list':
             return ContasPagarListSerializer
         return ContasPagarSerializer
+    
+    @action(detail=False, methods=['get'])
+    def estatisticas(self, request):
+        """Retorna estatísticas agregadas de contas a pagar"""
+        from datetime import date, timedelta
+        from django.db.models import Sum, Q
+        
+        queryset = self.get_queryset()
+        hoje = date.today()
+        proximos_7_dias = hoje + timedelta(days=7)
+        
+        # Contas não pagas (pendente, vencida ou paga_parcial)
+        contas_nao_pagas = queryset.filter(
+            Q(status='pendente') | Q(status='vencida') | Q(status='paga_parcial')
+        )
+        
+        # Total pendente (soma do valor restante de todas as contas não pagas)
+        total_pendente = sum(
+            (conta.valor_final - (conta.valor_pago or 0)) 
+            for conta in contas_nao_pagas
+        )
+        
+        # Contas vencidas (status='vencida' OU status='pendente' com data < hoje)
+        contas_vencidas = queryset.filter(
+            Q(status='vencida') | 
+            (Q(status='pendente') & Q(data_vencimento__lt=hoje))
+        )
+        vencidas_count = contas_vencidas.count()
+        vencidas_valor = sum(
+            (conta.valor_final - (conta.valor_pago or 0)) 
+            for conta in contas_vencidas
+        )
+        
+        # Contas pagas hoje
+        pagas_hoje = queryset.filter(
+            status='paga',
+            data_pagamento=hoje
+        ).count()
+        
+        # Próximos vencimentos (próximos 7 dias, não pagas)
+        proximos_vencimentos = contas_nao_pagas.filter(
+            data_vencimento__gte=hoje,
+            data_vencimento__lte=proximos_7_dias
+        ).count()
+        
+        return Response({
+            'total_pendente': float(total_pendente),
+            'vencidas_count': vencidas_count,
+            'vencidas_valor': float(vencidas_valor),
+            'pagas_hoje': pagas_hoje,
+            'proximos_vencimentos': proximos_vencimentos
+        })
     
     @action(detail=False, methods=['get'])
     def pendentes(self, request):
@@ -122,9 +200,29 @@ class ContasPagarViewSet(BaseCompanyViewSet):
         valor_pago = request.data.get('valor_pago', conta.valor_final)
         data_pagamento = request.data.get('data_pagamento')
         
+        try:
+            if isinstance(valor_pago, float):
+                valor_pago = Decimal(str(valor_pago))
+            elif isinstance(valor_pago, str):
+                valor_pago = Decimal(valor_pago)
+            elif isinstance(valor_pago, int):
+                valor_pago = Decimal(str(valor_pago))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Valor de pagamento inválido'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         conta.valor_pago = valor_pago
         if data_pagamento:
             conta.data_pagamento = data_pagamento
+        
+        # Atualizar status baseado no valor pago
+        if valor_pago >= conta.valor_final:
+            conta.status = 'paga'
+        else:
+            conta.status = 'pendente'
+            
         conta.save()
         
         serializer = self.get_serializer(conta)

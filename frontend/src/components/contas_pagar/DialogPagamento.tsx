@@ -150,9 +150,6 @@ export function DialogPagamento({
                                                 </span>
                                             </div>
                                         </div>
-                                        <Badge variant="outline" className="ml-2 shrink-0">
-                                            #{conta.id}
-                                        </Badge>
                                     </div>
 
                                     {/* Campos de Input - Layout em Grid */}
@@ -218,10 +215,6 @@ export function DialogPagamento({
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Valor Original:</span>
                                             <span className="font-medium">{formatCurrency(conta.valor_original)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Valor Restante:</span>
-                                            <span className="font-medium text-orange-600">{formatCurrency(calcularValorRestante(conta))}</span>
                                         </div>
                                         <div className="flex justify-between pt-1 border-t">
                                             <span className="font-medium">Total a Pagar:</span>

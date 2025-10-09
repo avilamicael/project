@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Importar Contas a Pagar{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:financeiro_contaspagar_changelist' %}">Contas a Pagar</a>
+    &rsaquo; Importar
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Importar Contas a Pagar via CSV</h1>
+
+<div class="module" style="margin-bottom: 20px; padding: 15px; background: #f8f8f8; border: 1px solid #ddd;">
+    <h2>Instruções</h2>
+    <ol>
+        <li><strong>Baixe o modelo CSV</strong> clicando no botão abaixo</li>
+        <li><strong>Preencha o arquivo</strong> com seus dados seguindo o formato do exemplo</li>
+        <li><strong>Faça o upload</strong> do arquivo preenchido usando o formulário abaixo</li>
+    </ol>
+
+    <h3>Formato do CSV:</h3>
+    <ul>
+        <li><strong>descricao</strong>: Descrição da conta (obrigatório)</li>
+        <li><strong>filial_nome</strong>: Nome da filial</li>
+        <li><strong>fornecedor_nome</strong>: Nome do fornecedor</li>
+        <li><strong>categoria_nome</strong>: Nome da categoria</li>
+        <li><strong>valor_original</strong>: Valor em formato 1000.00 ou 1000,00 (obrigatório)</li>
+        <li><strong>desconto, juros, multa</strong>: Valores opcionais no mesmo formato</li>
+        <li><strong>data_emissao</strong>: Data no formato YYYY-MM-DD (ex: 2025-01-15)</li>
+        <li><strong>data_vencimento</strong>: Data no formato YYYY-MM-DD (obrigatório)</li>
+        <li><strong>data_pagamento</strong>: Data de pagamento YYYY-MM-DD (para contas já pagas)</li>
+        <li><strong>forma_pagamento_nome</strong>: Nome da forma de pagamento (opcional)</li>
+        <li><strong>status</strong>: pendente, paga, vencida ou cancelada</li>
+        <li><strong>numero_boleto, notas_fiscais, observacoes</strong>: Campos opcionais</li>
+        <li><strong>criar_se_nao_existir</strong>: "sim" para criar automaticamente entidades que não existirem</li>
+    </ul>
+
+    <p style="margin-top: 15px;">
+        <a href="{% url 'admin:financeiro_contaspagar_modelo' %}" class="button" style="padding: 10px 15px; background: #417690; color: white; text-decoration: none; border-radius: 4px;">
+            📥 Baixar Modelo CSV
+        </a>
+    </p>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="margin-top: 20px;">
+    {% csrf_token %}
+
+    <div class="form-row">
+        <div>
+            <label for="csv_file">Arquivo CSV:</label>
+            <input type="file" name="csv_file" id="csv_file" accept=".csv" required style="margin-top: 5px;">
+        </div>
+    </div>
+
+    <div class="submit-row" style="margin-top: 20px;">
+        <input type="submit" value="Importar" class="default" style="padding: 10px 15px;">
+        <a href="{% url 'admin:financeiro_contaspagar_changelist' %}" class="button cancel-link" style="margin-left: 10px;">Cancelar</a>
+    </div>
+</form>
+
+<div class="module" style="margin-top: 30px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107;">
+    <h3>⚠️ Atenção</h3>
+    <ul>
+        <li>Certifique-se de que as <strong>Filiais</strong>, <strong>Fornecedores</strong> e <strong>Categorias</strong> já estão cadastrados no sistema</li>
+        <li>Os nomes devem corresponder <strong>exatamente</strong> aos cadastrados (não é case-sensitive)</li>
+        <li>O arquivo deve estar em formato <strong>CSV UTF-8</strong></li>
+        <li>Use ponto ou vírgula como separador decimal</li>
+        <li>Linhas com erros serão ignoradas e um relatório será exibido</li>
+    </ul>
+</div>
+
+{% endblock %}

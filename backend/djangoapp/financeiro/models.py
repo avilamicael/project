@@ -384,28 +384,28 @@ class ContasPagar(BaseCompanyModel):
         return f"{filial_info} {self.descricao}"
     
     def save(self, *args, **kwargs):
-        """Converte campos de texto para UPPERCASE e atualiza status"""
         if self.descricao:
             self.descricao = self.descricao.upper()
-        
+
         if self.notas_fiscais:
             self.notas_fiscais = self.notas_fiscais.upper()
-        
+
         if self.observacoes:
             self.observacoes = self.observacoes.upper()
-        
-        # Atualiza status automaticamente
-        if self.valor_pago > 0:
-            if self.valor_pago >= self.valor_final:
+
+        # 🔧 Corrigir comparação com None
+        if self.valor_pago is not None and self.valor_pago > 0:
+            if self.valor_final is not None and self.valor_pago >= self.valor_final:
                 self.status = 'paga'
                 if not self.data_pagamento:
                     self.data_pagamento = date.today()
             else:
                 self.status = 'paga_parcial'
-        elif self.status == 'pendente' and self.data_vencimento < date.today():
+        elif self.status == 'pendente' and self.data_vencimento and self.data_vencimento < date.today():
             self.status = 'vencida'
-        
+
         super().save(*args, **kwargs)
+
     
     @property
     def valor_final(self):
@@ -414,8 +414,10 @@ class ContasPagar(BaseCompanyModel):
     
     @property
     def valor_restante(self):
-        """Calcula quanto ainda falta pagar"""
-        return max(self.valor_final - self.valor_pago, Decimal('0'))
+        valor_final = Decimal(str(self.valor_final)) if self.valor_final else Decimal('0')
+        valor_pago = Decimal(str(self.valor_pago)) if self.valor_pago else Decimal('0')
+        
+        return max(valor_final - valor_pago, Decimal('0'))
     
     @property
     def esta_vencida(self):

@@ -52,8 +52,8 @@ export interface Fornecedor {
   estado?: string;
   ativo: boolean;
   endereco?: string;
-  cep?: string;  
-  observacoes?: string;  
+  cep?: string;
+  observacoes?: string;
 
 }
 
@@ -79,14 +79,37 @@ interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface ContasPagarEstatisticas {
+  total_pendente: number;
+  vencidas_count: number;
+  vencidas_valor: number;
+  pagas_hoje: number;
+  proximos_vencimentos: number;
+}
+
 export const contasPagarService = {
   /**
    * Lista todas as contas a pagar
    */
-  listar: async (): Promise<ContaPagar[]> => {
-    const response = await api.get<PaginatedResponse<ContaPagar>>('/financeiro/contas-pagar/');
-    return response.data.results;
+  listar: async (params: { page?: number; page_size?: number } = {}): Promise<PaginatedResponse<ContaPagar>> => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page.toString());
+    if (params.page_size) query.append('page_size', params.page_size.toString());
+
+    const response = await api.get<PaginatedResponse<ContaPagar>>(
+      `/financeiro/contas-pagar/?${query.toString()}`
+    );
+    return response.data;
   },
+
+  /**
+   * Busca estatísticas agregadas de contas a pagar
+   */
+  estatisticas: async (): Promise<ContasPagarEstatisticas> => {
+    const response = await api.get<ContasPagarEstatisticas>('/financeiro/contas-pagar/estatisticas/');
+    return response.data;
+  },
+
 
   /**
    * Busca uma conta específica por ID
@@ -99,40 +122,40 @@ export const contasPagarService = {
   /**
    * Cria uma nova conta a pagar
    */
-criar: async (data: ContaPagar): Promise<ContaPagar> => {
-  // Se tiver anexo, envia como FormData
-  if (data.anexo) {
-    const formData = new FormData();
-    
-    // Adiciona todos os campos
-    formData.append('filial', data.filial);
-    formData.append('fornecedor', data.fornecedor);
-    formData.append('categoria', data.categoria);
-    formData.append('descricao', data.descricao);
-    formData.append('valor_original', data.valor_original.toString());
-    formData.append('data_vencimento', data.data_vencimento);
-    
-    // Campos opcionais
-    if (data.forma_pagamento) formData.append('forma_pagamento', data.forma_pagamento);
-    if (data.numero_boleto) formData.append('numero_boleto', data.numero_boleto);
-    if (data.notas_fiscais) formData.append('notas_fiscais', data.notas_fiscais);
-    if (data.observacoes) formData.append('observacoes', data.observacoes);
-    
-    // Adiciona o arquivo
-    formData.append('anexo', data.anexo);
-    
-    const response = await api.post<ContaPagar>('/financeiro/contas-pagar/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  criar: async (data: ContaPagar): Promise<ContaPagar> => {
+    // Se tiver anexo, envia como FormData
+    if (data.anexo) {
+      const formData = new FormData();
+
+      // Adiciona todos os campos
+      formData.append('filial', data.filial);
+      formData.append('fornecedor', data.fornecedor);
+      formData.append('categoria', data.categoria);
+      formData.append('descricao', data.descricao);
+      formData.append('valor_original', data.valor_original.toString());
+      formData.append('data_vencimento', data.data_vencimento);
+
+      // Campos opcionais
+      if (data.forma_pagamento) formData.append('forma_pagamento', data.forma_pagamento);
+      if (data.numero_boleto) formData.append('numero_boleto', data.numero_boleto);
+      if (data.notas_fiscais) formData.append('notas_fiscais', data.notas_fiscais);
+      if (data.observacoes) formData.append('observacoes', data.observacoes);
+
+      // Adiciona o arquivo
+      formData.append('anexo', data.anexo);
+
+      const response = await api.post<ContaPagar>('/financeiro/contas-pagar/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    }
+
+    // Se não tiver anexo, envia JSON normal
+    const response = await api.post<ContaPagar>('/financeiro/contas-pagar/', data);
     return response.data;
-  }
-  
-  // Se não tiver anexo, envia JSON normal
-  const response = await api.post<ContaPagar>('/financeiro/contas-pagar/', data);
-  return response.data;
-},
+  },
 
   /**
    * Atualiza uma conta existente
@@ -197,7 +220,7 @@ export const filiaisService = {
     const response = await api.get<PaginatedResponse<Filial>>('/financeiro/filiais/');
     return response.data.results;
   },
-  
+
   criar: async (data: Omit<Filial, 'id'>): Promise<Filial> => {
     const response = await api.post<Filial>('/financeiro/filiais/', data);
     return response.data;
@@ -209,7 +232,7 @@ export const fornecedoresService = {
     const response = await api.get<PaginatedResponse<Fornecedor>>('/financeiro/fornecedores/');
     return response.data.results;
   },
-  
+
   criar: async (data: Omit<Fornecedor, 'id'>): Promise<Fornecedor> => {
     const response = await api.post<Fornecedor>('/financeiro/fornecedores/', data);
     return response.data;
@@ -221,7 +244,7 @@ export const categoriasService = {
     const response = await api.get<PaginatedResponse<Categoria>>('/financeiro/categorias/');
     return response.data.results;
   },
-  
+
   criar: async (data: Omit<Categoria, 'id'>): Promise<Categoria> => {
     const response = await api.post<Categoria>('/financeiro/categorias/', data);
     return response.data;
@@ -233,7 +256,7 @@ export const formasPagamentoService = {
     const response = await api.get<PaginatedResponse<FormaPagamento>>('/financeiro/formas-pagamento/');
     return response.data.results;
   },
-  
+
   criar: async (data: Omit<FormaPagamento, 'id'>): Promise<FormaPagamento> => {
     const response = await api.post<FormaPagamento>('/financeiro/formas-pagamento/', data);
     return response.data;

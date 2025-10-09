@@ -68,7 +68,7 @@ const contasPagarSchema = z.object({
   frequencia_recorrencia: z.string().optional(),
 
   // Campos opcionais
-  forma_pagamento: z.string().optional(),
+  forma_pagamento: z.string().min(1, "Forma de pagamento é obrigatória"),
   notas_fiscais: z.string().optional(),
   numero_boleto: z.string().optional(),
   observacoes: z.string().optional(),
@@ -216,7 +216,7 @@ export default function ContasPagarForm() {
         descricao: data.descricao,
         valor_original: data.valor_original,
         data_vencimento: data.data_vencimento.toISOString().split('T')[0],
-        forma_pagamento: data.forma_pagamento || undefined,
+        forma_pagamento: data.forma_pagamento,
         numero_boleto: data.numero_boleto || undefined,
         notas_fiscais: data.notas_fiscais || undefined,
         observacoes: data.observacoes || undefined,
@@ -233,7 +233,6 @@ export default function ContasPagarForm() {
         payload.quantidade_recorrencias = data.quantidade_recorrencias;
       }
       
-      // ADICIONAR ESTA LINHA - Chama a API
       await contasPagarService.criar(payload);
 
       toast.success("Conta cadastrada com sucesso!", {
@@ -557,7 +556,7 @@ export default function ContasPagarForm() {
               name="forma_pagamento"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>FORMA DE PAGAMENTO</FormLabel>
+                  <FormLabel>FORMA DE PAGAMENTO *</FormLabel>
                   <FormControl>
                     <Combobox
                       options={formasPagamento}

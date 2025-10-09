@@ -18,6 +18,7 @@ export interface ContaPagar {
   multa?: number | string;
   valor_pago?: number | string;
   data_emissao: string | Date;
+  data_movimentacao?: string | Date;
   data_vencimento: string | Date;
   data_pagamento?: string | Date | null;
   status: StatusType;
