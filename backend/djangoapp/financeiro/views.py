@@ -126,10 +126,6 @@ class ContasPagarViewSet(BaseCompanyViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-
-        # 🔍 DEBUG: Log dos parâmetros recebidos
-        print('🔍 Query params recebidos:', dict(self.request.query_params))
-
         # 🔹 Ordenar primeiro por status, depois por data de vencimento
         queryset = queryset.annotate(
             status_order=models.Case(
@@ -140,8 +136,6 @@ class ContasPagarViewSet(BaseCompanyViewSet):
             )
         ).order_by('status_order', 'data_vencimento')
 
-        # 🔍 DEBUG: Log do SQL gerado
-        print('🔍 Total de contas antes dos filtros:', queryset.count())
 
         return queryset
     
@@ -154,10 +148,8 @@ class ContasPagarViewSet(BaseCompanyViewSet):
     def list(self, request, *args, **kwargs):
         """Override para adicionar debug"""
         queryset = self.filter_queryset(self.get_queryset())
-        print('🔍 Total de contas DEPOIS dos filtros:', queryset.count())
         if queryset.exists():
-            print('🔍 Primeira conta encontrada:', queryset.first().descricao, '-', queryset.first().data_vencimento)
-        return super().list(request, *args, **kwargs)
+            return super().list(request, *args, **kwargs)
     
     @action(detail=False, methods=['get'])
     def estatisticas(self, request):

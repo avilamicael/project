@@ -79,7 +79,6 @@ export function FornecedorDialog({
     setIsLoading(true);
 
     try {
-      console.log("🔵 Criando fornecedor com dados:", data);
       const novoFornecedor = await fornecedoresService.criar({
         nome: data.nome,
         nome_fantasia: data.nome_fantasia || "",
@@ -96,18 +95,9 @@ export function FornecedorDialog({
         observacoes: ""
       });
 
-      console.log("✅ Fornecedor criado com sucesso:", novoFornecedor);
-      console.log("📋 Dados que serão enviados ao onSuccess:", {
-        id: novoFornecedor.id,
-        nome: novoFornecedor.nome,
-        nome_fantasia: novoFornecedor.nome_fantasia,
-        ativo: novoFornecedor.ativo
-      });
-
       toast.success("Fornecedor criado com sucesso!");
       
       // Chama o callback ANTES de fechar
-      console.log("🎯 Chamando onSuccess...");
       onSuccess(novoFornecedor);
       
       // Reseta e fecha depois

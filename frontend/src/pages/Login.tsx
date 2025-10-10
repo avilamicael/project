@@ -24,7 +24,7 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login');
     } finally {

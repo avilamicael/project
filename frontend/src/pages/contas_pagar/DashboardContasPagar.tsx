@@ -67,7 +67,7 @@ export default function DashboardContasPagar() {
             onClick={() => navigate('/contas-pagar')}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Novo Acordo
+            Adicionar Nova Conta
           </Button>
         </div>
       </div>

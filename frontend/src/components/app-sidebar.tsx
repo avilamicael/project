@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext"
 const data = {
   teams: [
     {
-      plan: "Kobrasol",
+      plan: "-",
       name: "SyncWave",
       logo: AlignHorizontalJustifyEnd,
     },

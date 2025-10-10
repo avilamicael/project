@@ -143,7 +143,6 @@ export const contasPagarService = {
     if (params.search) query.append('search', params.search);
 
     const url = `/financeiro/contas-pagar/?${query.toString()}`;
-    console.log('🌐 URL da requisição:', url);
 
     const response = await api.get<PaginatedResponse<ContaPagar>>(url);
     return response.data;

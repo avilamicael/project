@@ -79,7 +79,6 @@ export function useContasPagar(filters?: Filters, searchTerm?: string) {
         params.search = searchTerm;
       }
 
-      console.log('📤 Parâmetros enviados ao backend:', params);
 
       const response = await contasPagarService.listar(params);
       const contasData = response.results || response;
