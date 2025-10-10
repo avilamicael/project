@@ -53,16 +53,30 @@ export const formatCurrency = (value: number | string): string => {
   }).format(numericValue || 0);
 };
 
+/**
+ * Converte uma string de data (YYYY-MM-DD) do backend para um objeto Date
+ * mantendo a data correta sem ajuste de fuso horário
+ */
+export const parseBackendDate = (dateString: string | Date): Date => {
+  if (dateString instanceof Date) return dateString;
+
+  // Se a data está no formato ISO (YYYY-MM-DD), cria a data em UTC
+  // para evitar problemas de fuso horário
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return '-';
-  return new Date(date).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  const parsedDate = typeof date === 'string' ? parseBackendDate(date) : date;
+  return parsedDate.toLocaleDateString('pt-BR');
 };
 
 export const isVencida = (dataVencimento: string | Date, status: StatusType): boolean => {
   if (status === 'paga' || status === 'cancelada') return false;
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  const vencimento = new Date(dataVencimento);
+  const vencimento = parseBackendDate(dataVencimento);
   vencimento.setHours(0, 0, 0, 0);
   return vencimento < hoje;
 };

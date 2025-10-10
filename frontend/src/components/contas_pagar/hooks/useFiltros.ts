@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { Filters, ContaPagar } from '@/types/contasPagar';
-import { isVencida } from '@/lib/utils';
+import { isVencida, parseBackendDate } from '@/lib/utils';
 
 export function useFiltros(contas: ContaPagar[]) {
     const [filters, setFilters] = useState<Filters>({
@@ -104,11 +104,11 @@ export function useFiltros(contas: ContaPagar[]) {
 
         // Filtro de data de vencimento
         if (filters.dataVencimento?.from) {
-            const fromDate = new Date(filters.dataVencimento.from as any);
-            const toDate = filters.dataVencimento.to ? new Date(filters.dataVencimento.to as any) : fromDate;
+            const fromDate = parseBackendDate(filters.dataVencimento.from as any);
+            const toDate = filters.dataVencimento.to ? parseBackendDate(filters.dataVencimento.to as any) : fromDate;
             const before = result.length;
             result = result.filter(conta => {
-                const dataVenc = new Date(conta.data_vencimento);
+                const dataVenc = parseBackendDate(conta.data_vencimento);
                 const match = dataVenc.getTime() >= fromDate.getTime() && dataVenc.getTime() <= toDate.getTime();
                 if (before <= 3) console.log(`Conta ${conta.id}: data_vencimento=${conta.data_vencimento}, match=${match}`);
                 return match;
@@ -117,12 +117,12 @@ export function useFiltros(contas: ContaPagar[]) {
 
         // Filtro de data de pagamento
         if (filters.dataPagamento?.from) {
-            const fromDate = new Date(filters.dataPagamento.from as any);
-            const toDate = filters.dataPagamento.to ? new Date(filters.dataPagamento.to as any) : fromDate;
+            const fromDate = parseBackendDate(filters.dataPagamento.from as any);
+            const toDate = filters.dataPagamento.to ? parseBackendDate(filters.dataPagamento.to as any) : fromDate;
             const before = result.length;
             result = result.filter(conta => {
                 if (!conta.data_pagamento) return false;
-                const dataPag = new Date(conta.data_pagamento);
+                const dataPag = parseBackendDate(conta.data_pagamento);
                 return dataPag.getTime() >= fromDate.getTime() && dataPag.getTime() <= toDate.getTime();
             });
         }
@@ -135,7 +135,7 @@ export function useFiltros(contas: ContaPagar[]) {
             if (aVencida && !bVencida) return -1;
             if (!aVencida && bVencida) return 1;
 
-            return new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime();
+            return parseBackendDate(a.data_vencimento).getTime() - parseBackendDate(b.data_vencimento).getTime();
         });
 
         return result;

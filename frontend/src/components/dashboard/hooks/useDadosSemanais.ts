@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ContaPagar } from '@/types/contasPagar';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format } from 'date-fns';
+import { parseBackendDate } from '@/lib/utils';
 
 export interface DadosSemana {
   semana: string;
@@ -33,7 +34,7 @@ export function useDadosSemanais(contas: ContaPagar[]) {
 
       // Filtra contas que vencem nesta semana
       const contasDaSemana = contas.filter(conta => {
-        const dataVencimento = new Date(conta.data_vencimento);
+        const dataVencimento = parseBackendDate(conta.data_vencimento);
         return dataVencimento >= inicioSemanaAjustado && dataVencimento <= fimSemanaAjustado;
       });
 

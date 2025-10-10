@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { ContaPagar } from '@/types/contasPagar';
-import { startOfMonth, endOfMonth, addDays, format, isSameDay } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseBackendDate } from '@/lib/utils';
 
 export interface ContaDetalhada {
   fornecedor: string;
@@ -31,7 +32,7 @@ export function useDadosDiarios(contas: ContaPagar[]) {
     const diasComContas = new Map<string, DadosDia>();
 
     contas.forEach(conta => {
-      const dataVencimento = new Date(conta.data_vencimento);
+      const dataVencimento = parseBackendDate(conta.data_vencimento);
 
       // Verifica se a conta vence no mês atual
       if (dataVencimento >= inicioMes && dataVencimento <= fimMes) {

@@ -5,6 +5,7 @@
 
 import { api } from './api';
 import type { ContaPagar } from '@/types/contasPagar';
+import { parseBackendDate } from '@/lib/utils';
 
 // Tipo para criação de conta (campos necessários para o formulário)
 export interface ContaPagarCreate {
@@ -300,7 +301,7 @@ export const contasPagarService = {
 
     const total_valor_mes = contas
       .filter(conta => {
-        const dataVencimento = new Date(conta.data_vencimento);
+        const dataVencimento = parseBackendDate(conta.data_vencimento);
         return dataVencimento >= primeiroDiaMes && dataVencimento <= ultimoDiaMes;
       })
       .reduce((sum, conta) => {

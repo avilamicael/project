@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContaPagar } from "@/types/contasPagar";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseBackendDate } from "@/lib/utils";
 import { Calendar, AlertCircle, Clock, DollarSign, Eye } from "lucide-react";
 import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,7 +15,7 @@ interface ProximosAcordosCardProps {
 
 export function ProximosAcordosCard({ contas, loading, onViewDetails }: ProximosAcordosCardProps) {
   const getDataBadge = (dataVencimento: string | Date) => {
-    const data = new Date(dataVencimento);
+    const data = parseBackendDate(dataVencimento);
     const hoje = new Date();
     const diasRestantes = differenceInDays(data, hoje);
 
@@ -145,7 +145,7 @@ export function ProximosAcordosCard({ contas, loading, onViewDetails }: Proximos
 
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(conta.data_vencimento), "dd 'de' MMMM", { locale: ptBR })}
+                        {format(parseBackendDate(conta.data_vencimento), "dd 'de' MMMM", { locale: ptBR })}
                       </div>
                     </div>
 

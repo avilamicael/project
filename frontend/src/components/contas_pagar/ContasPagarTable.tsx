@@ -11,7 +11,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, isVencida, cn } from '@/lib/utils';
+import { formatCurrency, formatDate, isVencida, cn } from '@/lib/utils';
 import { STATUS_CONFIG } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
 
@@ -246,7 +246,7 @@ export function ContasPagarTable({
                                     <TableCell>{conta.fornecedor_nome || '-'}</TableCell>
                                     <TableCell>{conta.filial_nome || '-'}</TableCell>
                                     <TableCell>{conta.categoria_nome || '-'}</TableCell>
-                                    <TableCell>{new Date(conta.data_vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
+                                    <TableCell>{formatDate(conta.data_vencimento)}</TableCell>
                                     <TableCell className="text-right">
                                         {formatCurrency(Number(conta.valor_original))}
                                     </TableCell>
