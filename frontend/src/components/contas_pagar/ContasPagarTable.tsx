@@ -11,7 +11,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, calcularValorFinal, calcularValorRestante, isVencida, cn } from '@/lib/utils';
+import { formatCurrency, isVencida, cn } from '@/lib/utils';
 import { STATUS_CONFIG } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
 

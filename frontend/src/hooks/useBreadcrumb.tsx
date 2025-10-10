@@ -23,6 +23,10 @@ export function useBreadcrumb(): BreadcrumbItem[] {
       { label: 'Financeiro', href: '#' },
       { label: 'Listar Contas a Pagar' }
     ],
+    '/contas-pagar/dashboard': [
+      { label: 'Financeiro', href: '#' },
+      { label: 'Dashboard Financeiro' }
+    ],
     // Adicione mais rotas aqui
   };
 

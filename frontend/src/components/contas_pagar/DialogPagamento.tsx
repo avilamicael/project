@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { CheckCircle2 } from 'lucide-react';
 import { formatCurrency, calcularValorRestante, cn } from '@/lib/utils';
 import type { ContaPagar } from '@/types/contasPagar';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DialogPagamentoProps {

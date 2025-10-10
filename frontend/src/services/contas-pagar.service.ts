@@ -258,6 +258,65 @@ export const contasPagarService = {
     const response = await api.post<ContaPagar>(`/financeiro/contas-pagar/${id}/cancelar/`);
     return response.data;
   },
+
+  /**
+   * Lista próximas contas recorrentes (acordos)
+   * Retorna apenas contas recorrentes pendentes ordenadas por data de vencimento
+   */
+  listarProximasRecorrentes: async (limite?: number): Promise<ContaPagar[]> => {
+    const params = new URLSearchParams();
+    params.append('e_recorrente', 'true');
+    params.append('status', 'pendente');
+    params.append('ordering', 'data_vencimento');
+    if (limite) {
+      params.append('page_size', limite.toString());
+    }
+
+    const response = await api.get<PaginatedResponse<ContaPagar>>(`/financeiro/contas-pagar/?${params.toString()}`);
+    return response.data.results;
+  },
+
+  /**
+   * Busca estatísticas de contas recorrentes
+   */
+  estatisticasRecorrentes: async (): Promise<{
+    total_acordos: number;
+    proximo_vencimento?: ContaPagar;
+    total_valor_mes: number;
+  }> => {
+    // Busca todas as contas recorrentes pendentes
+    const response = await api.get<PaginatedResponse<ContaPagar>>('/financeiro/contas-pagar/?e_recorrente=true&status=pendente&ordering=data_vencimento');
+    const contas = response.data.results;
+
+    // Calcula total de acordos ativos
+    const total_acordos = contas.length;
+
+    // Pega o próximo vencimento (primeira conta da lista ordenada)
+    const proximo_vencimento = contas.length > 0 ? contas[0] : undefined;
+
+    // Calcula total de valor para o mês atual
+    const hoje = new Date();
+    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+
+    const total_valor_mes = contas
+      .filter(conta => {
+        const dataVencimento = new Date(conta.data_vencimento);
+        return dataVencimento >= primeiroDiaMes && dataVencimento <= ultimoDiaMes;
+      })
+      .reduce((sum, conta) => {
+        const valor = typeof conta.valor_original === 'string'
+          ? parseFloat(conta.valor_original)
+          : conta.valor_original;
+        return sum + valor;
+      }, 0);
+
+    return {
+      total_acordos,
+      proximo_vencimento,
+      total_valor_mes
+    };
+  },
 };
 
 // Serviços auxiliares para dados de formulário

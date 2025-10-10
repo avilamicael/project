@@ -39,8 +39,8 @@ const data = {
       icon: Wallet,
       items: [
         {
-          title: "Dashboard",
-          url: "/financeiro/dashboard",
+          title: "Dashboard Financeiro",
+          url: "/contas-pagar/dashboard",
         },
         {
           title: "Adicionar Contas a Pagar",
