@@ -18,11 +18,33 @@ interface DateRangePickerProps {
   placeholder?: string;
 }
 
-export function DateRangePicker({ 
-  date, 
-  setDate, 
-  placeholder = "Selecione o período" 
+export function DateRangePicker({
+  date,
+  setDate,
+  placeholder = "Selecione o período"
 }: DateRangePickerProps) {
+  // Normalizar datas para evitar problemas de timezone
+  const handleDateChange = (newDate: DateRange | undefined) => {
+    if (newDate?.from) {
+      // Normalizar para meio-dia no horário local
+      const normalizedFrom = new Date(newDate.from);
+      normalizedFrom.setHours(12, 0, 0, 0);
+
+      const normalizedRange: DateRange = {
+        from: normalizedFrom,
+        to: newDate.to ? (() => {
+          const normalizedTo = new Date(newDate.to);
+          normalizedTo.setHours(12, 0, 0, 0);
+          return normalizedTo;
+        })() : undefined
+      };
+
+      setDate(normalizedRange);
+    } else {
+      setDate(newDate);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -54,7 +76,7 @@ export function DateRangePicker({
           mode="range"
           defaultMonth={date?.from}
           selected={date}
-          onSelect={setDate}
+          onSelect={handleDateChange}
           numberOfMonths={2}
           locale={ptBR}
         />

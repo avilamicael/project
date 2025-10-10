@@ -131,20 +131,21 @@ export const contasPagarService = {
     if (params.page) query.append('page', params.page.toString());
     if (params.page_size) query.append('page_size', params.page_size.toString());
 
-    // Filtros
-    if (params.status?.length) params.status.forEach(s => query.append('status', s));
-    if (params.filial?.length) params.filial.forEach(f => query.append('filial', f));
-    if (params.categoria?.length) params.categoria.forEach(c => query.append('categoria', c));
-    if (params.fornecedor?.length) params.fornecedor.forEach(f => query.append('fornecedor', f));
+    // Filtros - enviar como valores separados por vírgula para BaseInFilter
+    if (params.status?.length) query.append('status', params.status.join(','));
+    if (params.filial?.length) query.append('filial', params.filial.join(','));
+    if (params.categoria?.length) query.append('categoria', params.categoria.join(','));
+    if (params.fornecedor?.length) query.append('fornecedor', params.fornecedor.join(','));
     if (params.data_vencimento_inicio) query.append('data_vencimento_inicio', params.data_vencimento_inicio);
     if (params.data_vencimento_fim) query.append('data_vencimento_fim', params.data_vencimento_fim);
     if (params.data_pagamento_inicio) query.append('data_pagamento_inicio', params.data_pagamento_inicio);
     if (params.data_pagamento_fim) query.append('data_pagamento_fim', params.data_pagamento_fim);
     if (params.search) query.append('search', params.search);
 
-    const response = await api.get<PaginatedResponse<ContaPagar>>(
-      `/financeiro/contas-pagar/?${query.toString()}`
-    );
+    const url = `/financeiro/contas-pagar/?${query.toString()}`;
+    console.log('🌐 URL da requisição:', url);
+
+    const response = await api.get<PaginatedResponse<ContaPagar>>(url);
     return response.data;
   },
 

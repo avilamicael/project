@@ -246,7 +246,7 @@ export function ContasPagarTable({
                                     <TableCell>{conta.fornecedor_nome || '-'}</TableCell>
                                     <TableCell>{conta.filial_nome || '-'}</TableCell>
                                     <TableCell>{conta.categoria_nome || '-'}</TableCell>
-                                    <TableCell>{new Date(conta.data_vencimento).toLocaleDateString()}</TableCell>
+                                    <TableCell>{new Date(conta.data_vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                                     <TableCell className="text-right">
                                         {formatCurrency(Number(conta.valor_original))}
                                     </TableCell>

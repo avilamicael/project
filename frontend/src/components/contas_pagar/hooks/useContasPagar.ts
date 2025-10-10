@@ -28,16 +28,48 @@ export function useContasPagar(filters?: Filters, searchTerm?: string) {
         if (filters.fornecedor?.length) params.fornecedor = filters.fornecedor.map(String);
 
         if (filters.dataVencimento?.from) {
-          params.data_vencimento_inicio = new Date(filters.dataVencimento.from as any).toISOString().split('T')[0];
+          const fromDate = filters.dataVencimento.from instanceof Date
+            ? filters.dataVencimento.from
+            : new Date(filters.dataVencimento.from as any);
+
+          // Formatar usando o timezone local - criar nova data para evitar mutação
+          const localFrom = new Date(fromDate.getTime() - fromDate.getTimezoneOffset() * 60000);
+          const year = localFrom.getUTCFullYear();
+          const month = String(localFrom.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(localFrom.getUTCDate()).padStart(2, '0');
+          params.data_vencimento_inicio = `${year}-${month}-${day}`;
+
           if (filters.dataVencimento.to) {
-            params.data_vencimento_fim = new Date(filters.dataVencimento.to as any).toISOString().split('T')[0];
+            const toDate = filters.dataVencimento.to instanceof Date
+              ? filters.dataVencimento.to
+              : new Date(filters.dataVencimento.to as any);
+
+            // Formatar usando o timezone local - criar nova data para evitar mutação
+            const localTo = new Date(toDate.getTime() - toDate.getTimezoneOffset() * 60000);
+            const toYear = localTo.getUTCFullYear();
+            const toMonth = String(localTo.getUTCMonth() + 1).padStart(2, '0');
+            const toDay = String(localTo.getUTCDate()).padStart(2, '0');
+            params.data_vencimento_fim = `${toYear}-${toMonth}-${toDay}`;
           }
         }
 
         if (filters.dataPagamento?.from) {
-          params.data_pagamento_inicio = new Date(filters.dataPagamento.from as any).toISOString().split('T')[0];
+          const fromDate = filters.dataPagamento.from instanceof Date
+            ? filters.dataPagamento.from
+            : new Date(filters.dataPagamento.from as any);
+
+          // Formatar usando o timezone local - criar nova data para evitar mutação
+          const localFrom = new Date(fromDate.getTime() - fromDate.getTimezoneOffset() * 60000);
+          params.data_pagamento_inicio = `${localFrom.getUTCFullYear()}-${String(localFrom.getUTCMonth() + 1).padStart(2, '0')}-${String(localFrom.getUTCDate()).padStart(2, '0')}`;
+
           if (filters.dataPagamento.to) {
-            params.data_pagamento_fim = new Date(filters.dataPagamento.to as any).toISOString().split('T')[0];
+            const toDate = filters.dataPagamento.to instanceof Date
+              ? filters.dataPagamento.to
+              : new Date(filters.dataPagamento.to as any);
+
+            // Formatar usando o timezone local - criar nova data para evitar mutação
+            const localTo = new Date(toDate.getTime() - toDate.getTimezoneOffset() * 60000);
+            params.data_pagamento_fim = `${localTo.getUTCFullYear()}-${String(localTo.getUTCMonth() + 1).padStart(2, '0')}-${String(localTo.getUTCDate()).padStart(2, '0')}`;
           }
         }
       }
@@ -46,6 +78,8 @@ export function useContasPagar(filters?: Filters, searchTerm?: string) {
       if (searchTerm) {
         params.search = searchTerm;
       }
+
+      console.log('📤 Parâmetros enviados ao backend:', params);
 
       const response = await contasPagarService.listar(params);
       const contasData = response.results || response;

@@ -43,7 +43,7 @@ const data = {
           url: "/financeiro/dashboard",
         },
         {
-          title: "Contas a Pagar",
+          title: "Adicionar Contas a Pagar",
           url: "/contas-pagar",
         },
         {

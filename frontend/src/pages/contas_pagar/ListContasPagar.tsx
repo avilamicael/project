@@ -233,7 +233,7 @@ export default function ContasPagarPage() {
                         <Download className="mr-2 h-4 w-4" />
                         Exportar
                     </Button>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => window.location.href = '/contas-pagar'}>
                         Adicionar Conta
                     </Button>
                 </div>

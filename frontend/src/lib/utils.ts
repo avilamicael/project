@@ -55,7 +55,7 @@ export const formatCurrency = (value: number | string): string => {
 
 export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return '-';
-  return new Date(date).toLocaleDateString('pt-BR');
+  return new Date(date).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
 export const isVencida = (dataVencimento: string | Date, status: StatusType): boolean => {

@@ -19,9 +19,9 @@ export function useBreadcrumb(): BreadcrumbItem[] {
       { label: 'Financeiro', href: '#' },
       { label: 'Contas a Pagar' }
     ],
-    '/contas-receber': [
+    '/contas-pagar/listar': [
       { label: 'Financeiro', href: '#' },
-      { label: 'Contas a Receber' }
+      { label: 'Listar Contas a Pagar' }
     ],
     // Adicione mais rotas aqui
   };
